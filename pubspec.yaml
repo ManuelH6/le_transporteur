@@ -1,0 +1,12 @@
+name: le_transporteur_workspace
+description: Monorepo pour Le Transporteur
+
+environment:
+  sdk: ^3.10.1
+
+publish_to: none
+
+workspace:
+  - apps/client
+  - apps/livreur
+  - shared
