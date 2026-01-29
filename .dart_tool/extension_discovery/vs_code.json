@@ -1,0 +1,1 @@
+{"version":2,"entries":[{"package":"le_transporteur_workspace","rootUri":"../","packageUri":"lib/"},{"package":"client_le_transporteur","rootUri":"../apps/client/","packageUri":"lib/"},{"package":"livreur_le_transporteur","rootUri":"../apps/livreur/","packageUri":"lib/"},{"package":"shared_le_transporteur","rootUri":"../shared/","packageUri":"lib/"}]}
