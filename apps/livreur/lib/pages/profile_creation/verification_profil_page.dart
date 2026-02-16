@@ -68,7 +68,7 @@ class VerificationProfilPage extends StatelessWidget {
                 onPressed: () {
                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const PieceIdentitePage()),
+                      MaterialPageRoute(builder: (context) => PieceIdentitePage(registrationData: registrationData)),
                     );
                 },
               ),

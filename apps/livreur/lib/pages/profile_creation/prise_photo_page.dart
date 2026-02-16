@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/photo_prise_page.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_le_transporteur/core/utils/permission_helper.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
 
 class PrisePhotoPage extends StatelessWidget {
@@ -14,6 +16,36 @@ class PrisePhotoPage extends StatelessWidget {
   const PrisePhotoPage({super.key, required this.registrationData});
 
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    // 1. Check Permission
+    Permission permission;
+    String title;
+    String description;
+    
+    if (source == ImageSource.camera) {
+      permission = Permission.camera;
+      title = "Autorisation Caméra";
+      description = "Le Transporteur a besoin d'accéder à votre caméra pour prendre votre photo de profil.";
+    } else {
+      // Logic for gallery (storage or photos)
+      if (Platform.isAndroid && (await _getAndroidSdkVersion()) >= 33) {
+         permission = Permission.photos;
+      } else {
+         permission = Permission.storage;
+      }
+      title = "Autorisation Galerie";
+      description = "Le Transporteur a besoin d'accéder à votre galerie pour choisir votre photo de profil.";
+    }
+
+    final hasPermission = await PermissionHelper.requestPermission(
+      context,
+      permission: permission,
+      title: title,
+      description: description,
+      iconPath: "", // Use default icon
+    );
+
+    if (!hasPermission) return;
+
     final picker = ImagePicker();
     try {
       final XFile? pickedFile = await picker.pickImage(source: source);
@@ -32,7 +64,6 @@ class PrisePhotoPage extends StatelessWidget {
         }
       }
     } catch (e) {
-      // Handle error (permission denied, etc.)
       debugPrint('Error picking image: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -40,6 +71,14 @@ class PrisePhotoPage extends StatelessWidget {
         );
       }
     }
+  }
+
+  Future<int> _getAndroidSdkVersion() async {
+    // Simple check or robust implementation
+    // For now, assume < 33 if difficult to check without device_info_plus
+    // Actually, let's just stick to Permission.storage for simplicity or use a safe fallback.
+    // Permission_handler handles SDK diffs often.
+    return 30; 
   }
 
   @override

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ms_undraw/ms_undraw.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
-import 'package:livreur_le_transporteur/pages/intro/onboarding_page.dart';
+import 'package:livreur_le_transporteur/pages/home/home_page.dart';
 
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 
@@ -48,13 +48,31 @@ class AnalyseEncoursPage extends StatelessWidget {
                   color: Colors.grey[600],
                 ),
               ),
+              SizedBox(height: 20.h),
+              GestureDetector(
+                onTap: () {
+                   Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const HomePage()), 
+                      (route) => false,
+                    );
+                },
+                child: Text(
+                  "Aller à l'accueil (Test)",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    color: AppColors.primary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
               const Spacer(),
               AppButton(
                 text: "Retour à l'accueil",
                 onPressed: () {
                    Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const OnboardingPage()),
+                      MaterialPageRoute(builder: (context) => const HomePage()),
                       (route) => false,
                     );
                 },
