@@ -48,6 +48,7 @@ class _AppTextFieldState extends State<AppTextField> {
           },
       decoration: InputDecoration(
         hintText: widget.hintText,
+        hintStyle: TextStyle(fontSize: 14.sp),
         prefixIcon: Icon(widget.prefixIcon, color: AppColors.primary, size: 20.sp),
         suffixIcon: widget.isPassword
             ? IconButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:shared_le_transporteur/screens/splash_screen.dart';
+import 'package:livreur_le_transporteur/pages/intro/onboarding_page.dart';
+import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,11 +18,10 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context , child) {
         return MaterialApp(
-          title: 'Livreur App',
-          theme: ThemeData(
-            primarySwatch: Colors.orange,
-          ),
-          home: const SplashScreen(useOrangeSplash: true),
+          debugShowCheckedModeBanner: false,
+          title: 'Livreur Le Transporteur',
+          theme: AppTheme.theme, // Use the shared theme
+          home: const OnboardingPage(),
         );
       },
     );
