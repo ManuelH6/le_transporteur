@@ -16,84 +16,119 @@ class OnboardingPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.w),
-          child: Column(
-            children: [
-              Spacer(),
-              Text(
-                "Bienvenue chez\nLE TRANSPORTEUR",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 24.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.text,
-                ),
-              ),
-              SizedBox(height: 30.h),
-              Expanded(
-                flex: 3,
-                child: AppImage(
-                  assetPath: AppAssets.deuxLivreurs,
-                  fit: BoxFit.contain,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              Text(
-                "Connectez-vous ou inscrivez-vous pour commencer à livrer.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: AppColors.text.withOpacity(0.7),
-                ),
-              ),
-              Spacer(),
-              Row(
+        child: Stack(
+          children: [
+            // Orange decorative circles
+            // Positioned(
+            //   top: 100.h,
+            //   right: -30.w,
+            //   child: Container(
+            //     width: 120.w,
+            //     height: 120.w,
+            //     decoration: BoxDecoration(
+            //       color: AppColors.primary,
+            //       shape: BoxShape.circle,
+            //     ),
+            //   ),
+            // ),
+            // Positioned(
+            //   bottom: 280.h,
+            //   left: -20.w,
+            //   child: Container(
+            //     width: 100.w,
+            //     height: 100.w,
+            //     decoration: BoxDecoration(
+            //       color: AppColors.primary,
+            //       shape: BoxShape.circle,
+            //     ),
+            //   ),
+            // ),
+            // Main content
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 50.h,
-                      child: OutlinedButton(
-                        onPressed: () {
-                           Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const RegisterPage()),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                  SizedBox(height: 40.h),
+                  RichText(
+                    textAlign: TextAlign.left,
+                    text: TextSpan(
+                      style: GoogleFonts.poppins(
+                        fontSize: 22.sp,
+                        color: AppColors.text,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: "Bienvenue chez\n",
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        child: Text(
-                          "Inscription",
+                        TextSpan(
+                          text: "LE TRANSPORTEUR",
                           style: GoogleFonts.poppins(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 40.h),
+                  Expanded(
+                    child: Center(
+                      child: AppImage(
+                        assetPath: AppAssets.deuxLivreurs,
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
-                  SizedBox(width: 16.w),
-                  Expanded(
-                    child: AppButton(
-                      text: "Connexion",
-                      onPressed: () {
-                         Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginPage()),
-                          );
-                      },
+                  SizedBox(height: 30.h),
+                  Text(
+                    "Connectez-vous ou inscrivez-vous\npour commencer à livrer.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.sp,
+                      color: AppColors.text.withOpacity(0.7),
+                      height: 1.4,
                     ),
                   ),
+                  SizedBox(height: 30.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppButton(
+                          text: "Inscription",
+                          isPrimary: false,
+                          backgroundColor: Color(0xFF3D3D3D),
+                          textColor: AppColors.white,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const RegisterPage()),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.w),
+                      Expanded(
+                        child: AppButton(
+                          text: "Connexion",
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const LoginPage()),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 40.h),
                 ],
               ),
-              SizedBox(height: 40.h),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
