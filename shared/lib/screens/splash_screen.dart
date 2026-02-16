@@ -7,16 +7,18 @@ import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'dart:async';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import 'onboarding_screen.dart'; // Navigate to onboarding after splash
+//import 'onboarding_screen.dart'; // Navigate to onboarding after splash
+import 'welcome_screen.dart'; // Navigate to welcome screen after splash
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  final bool useOrangeSplash;
+  const SplashScreen({super.key, this.useOrangeSplash = false});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  SplashScreenState createState() => SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -36,7 +38,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
     });
   }
@@ -49,20 +51,42 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    // To use the orange splash, change backgroundColor and the logo asset.
-    const bool useOrangeSplash = false;
-
     return Scaffold(
-      backgroundColor: useOrangeSplash ? AppColors.primary : AppColors.background,
+      backgroundColor: widget.useOrangeSplash ? AppColors.primary : AppColors.background,
       body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: AppImage(
-              assetPath: useOrangeSplash ? AppAssets.logoWhite : AppAssets.logoOrange,
-              width: 200.w,
-            ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Center(
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: AppImage(
+                        assetPath: widget.useOrangeSplash ? AppAssets.logoWhite : AppAssets.logoOrange,
+                        width: 200.w,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (widget.useOrangeSplash)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 60.h),
+                  child: Text(
+                    "Pointez vos courses en un clin d'œil",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

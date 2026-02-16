@@ -3,10 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
+import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 
 class RegisterDriverScreen extends StatelessWidget {
-  const RegisterDriverScreen({Key? key}) : super(key: key);
+  const RegisterDriverScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +17,16 @@ class RegisterDriverScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              height: 300.h,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(AppAssets.backgroundLivreurMotoDeuxPersonnes),
-                  fit: BoxFit.cover,
-                ),
+            SizedBox(
+              height: 0.4.sh,
+              width: double.infinity,
+              child: AppImage(
+                assetPath: AppAssets.backgroundLivreurMotoDeuxPersonnes,
+                fit: BoxFit.cover,
               ),
             ),
             Transform.translate(
-              offset: Offset(0, -40.h),
+              offset: Offset(0, -40.r),
               child: Container(
                 padding: EdgeInsets.all(24.w),
                 decoration: BoxDecoration(
@@ -41,7 +41,7 @@ class RegisterDriverScreen extends StatelessWidget {
                       Text("Inscription", style: Theme.of(context).textTheme.displayLarge),
                       Text(
                         "Créez votre compte livreur pour rejoindre notre équipe.",
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.text.withOpacity(0.7)),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.text.withValues(alpha: 0.7)),
                       ),
                       SizedBox(height: 32.h),
                       const AppTextField(hintText: "Nom Complet", prefixIcon: Icons.person_outline),

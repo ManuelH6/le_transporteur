@@ -8,30 +8,37 @@ class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final bool isPrimary;
+  final Color? backgroundColor;
+  final Color? textColor;
 
   const AppButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isPrimary = true,
-  }) : super(key: key);
+    this.backgroundColor,
+    this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bgColor = backgroundColor ?? (isPrimary ? AppColors.primary : AppColors.white);
+    final txtColor = textColor ?? (isPrimary ? AppColors.white : AppColors.primary);
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
-          if (isPrimary)
+          if (isPrimary && backgroundColor == null)
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
         ],
       ),
       child: Material(
-        color: isPrimary ? AppColors.primary : AppColors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12.r),
         child: InkWell(
           onTap: onPressed,
@@ -43,7 +50,7 @@ class AppButton extends StatelessWidget {
             child: Text(
               text,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: isPrimary ? AppColors.white : AppColors.primary,
+                    color: txtColor,
                   ),
             ),
           ),

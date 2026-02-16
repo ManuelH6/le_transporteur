@@ -8,17 +8,18 @@ class AppImage extends StatelessWidget {
   final BoxFit? fit;
 
   const AppImage({
-    Key? key,
+    super.key,
     required this.assetPath,
     this.width,
     this.height,
     this.fit,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Image.asset(
       assetPath,
+      package: 'shared_le_transporteur',
       width: width,
       height: height,
       fit: fit,

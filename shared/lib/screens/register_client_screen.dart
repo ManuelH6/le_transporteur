@@ -3,10 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
+import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 
 class RegisterClientScreen extends StatelessWidget {
-  const RegisterClientScreen({Key? key}) : super(key: key);
+  const RegisterClientScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,17 +17,16 @@ class RegisterClientScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Container(
-              height: 300.h,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(AppAssets.backgroundLivreurColis),
-                  fit: BoxFit.cover,
-                ),
+            SizedBox(
+              height: 0.4.sh,
+              width: double.infinity,
+              child: AppImage(
+                assetPath: AppAssets.backgroundLivreurColis,
+                fit: BoxFit.cover,
               ),
             ),
             Transform.translate(
-              offset: Offset(0, -40.h),
+              offset: Offset(0, -40.r),
               child: Container(
                 padding: EdgeInsets.all(24.w),
                 decoration: BoxDecoration(

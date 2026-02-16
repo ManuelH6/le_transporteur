@@ -4,7 +4,7 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
 
 class UnavailableServiceScreen extends StatelessWidget {
-  const UnavailableServiceScreen({Key? key}) : super(key: key);
+  const UnavailableServiceScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

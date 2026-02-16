@@ -4,40 +4,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 
-class AppTextField extends StatelessWidget {
+class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String hintText;
   final IconData prefixIcon;
   final bool isPassword;
   final FormFieldValidator<String>? validator;
+  final TextInputType keyboardType;
 
   const AppTextField({
-    Key? key,
+    super.key,
     this.controller,
     required this.hintText,
     required this.prefixIcon,
     this.isPassword = false,
     this.validator,
-  }) : super(key: key);
+    this.keyboardType = TextInputType.text,
+  });
+
+  @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  bool _obscureText = true;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      validator: validator ?? (value) {
-        if (value == null || value.isEmpty) {
-          return 'Ce champ ne peut pas être vide';
-        }
-        return null;
-      },
+      controller: widget.controller,
+      obscureText: widget.isPassword && _obscureText,
+      keyboardType: widget.keyboardType,
+      validator: widget.validator ??
+          (value) {
+            if (value == null || value.isEmpty) {
+              return 'Ce champ ne peut pas être vide';
+            }
+            if (widget.keyboardType == TextInputType.emailAddress &&
+                !RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
+              return 'Veuillez saisir une adresse e-mail valide';
+            }
+            return null;
+          },
       decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(prefixIcon, color: AppColors.primary, size: 20.sp),
+        hintText: widget.hintText,
+        prefixIcon: Icon(widget.prefixIcon, color: AppColors.primary, size: 20.sp),
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppColors.primary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              )
+            : null,
         filled: true,
-        fillColor: AppColors.grey,
+        fillColor: AppColors.primary.withValues(alpha: 0.08),
         contentPadding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 16.w),
         border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide.none,
         ),

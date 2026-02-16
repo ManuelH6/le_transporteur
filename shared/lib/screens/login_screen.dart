@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
+import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -10,10 +11,10 @@ class LoginScreen extends StatelessWidget {
   final String title;
 
   const LoginScreen({
-    Key? key,
+    super.key,
     required this.backgroundImage,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,18 +25,17 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           children: [
             // Top Image Section
-            Container(
-              height: 350.h,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage(backgroundImage),
-                  fit: BoxFit.cover,
-                ),
+            SizedBox(
+              height: 0.4.sh,
+              width: double.infinity,
+              child: AppImage(
+                assetPath: backgroundImage,
+                fit: BoxFit.cover,
               ),
             ),
             // Bottom Form Section
             Transform.translate(
-              offset: Offset(0, -40.h),
+              offset: Offset(0, -40.r),
               child: Container(
                 padding: EdgeInsets.all(24.w),
                 decoration: BoxDecoration(
@@ -47,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.displayLarge),
+                      Text(title, style: Theme.of(context).textTheme.displayMedium),
                       SizedBox(height: 32.h),
                       const AppTextField(
                         hintText: "Numéro de téléphone",
@@ -113,6 +113,7 @@ class LoginScreen extends StatelessWidget {
 }
 
 // Example of how to use it in your navigation:
+// import 'package:shared_le_transporteur/core/constants/assets.dart';
 // Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(
 //   backgroundImage: AppAssets.backgroundMotoLivreur,
 //   title: "Connectez-vous !\nUne livraison vous attend !!"
