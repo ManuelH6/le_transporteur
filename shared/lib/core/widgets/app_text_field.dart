@@ -8,6 +8,7 @@ class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String hintText;
   final IconData prefixIcon;
+  final Color? prefixIconColor;
   final bool isPassword;
   final FormFieldValidator<String>? validator;
   final TextInputType keyboardType;
@@ -17,10 +18,12 @@ class AppTextField extends StatefulWidget {
     this.controller,
     required this.hintText,
     required this.prefixIcon,
+    this.prefixIconColor,
     this.isPassword = false,
     this.validator,
     this.keyboardType = TextInputType.text,
   });
+
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
@@ -49,7 +52,8 @@ class _AppTextFieldState extends State<AppTextField> {
       decoration: InputDecoration(
         hintText: widget.hintText,
         hintStyle: TextStyle(fontSize: 14.sp),
-        prefixIcon: Icon(widget.prefixIcon, color: AppColors.primary, size: 20.sp),
+        prefixIcon: Icon(widget.prefixIcon, color: widget.prefixIconColor ?? AppColors.primary, size: 20.sp),
+
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(

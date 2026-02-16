@@ -25,6 +25,7 @@
         "shared_le_transporteur"
       ],
       "devDependencies": [
+        "flutter_launcher_icons",
         "flutter_lints",
         "flutter_test"
       ]
@@ -47,6 +48,7 @@
         "shared_le_transporteur"
       ],
       "devDependencies": [
+        "flutter_launcher_icons",
         "flutter_lints",
         "flutter_test"
       ]
