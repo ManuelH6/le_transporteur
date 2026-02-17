@@ -69,7 +69,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget build(BuildContext context) {
     const focusedBorderColor = AppColors.primary;
     const fillColor = Color.fromRGBO(243, 246, 249, 0);
-    final borderColor = AppColors.primary.withOpacity(0.4);
+    final borderColor = AppColors.primary.withValues(alpha: 0.4);
 
     final defaultPinTheme = PinTheme(
       width: 56.w,

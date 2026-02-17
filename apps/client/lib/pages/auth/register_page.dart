@@ -6,7 +6,6 @@ import 'package:shared_le_transporteur/core/widgets/app_button.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
-import 'package:shared_le_transporteur/models/user_role.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:client_le_transporteur/pages/auth/login_page.dart';
 import 'package:client_le_transporteur/pages/home/client_home_page.dart';
@@ -79,7 +78,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   
                   // Header Image/Illustration
-                   Container(
+                   SizedBox(
                     height: 180.h,
                     child: Stack(
                       fit: StackFit.expand,
@@ -91,7 +90,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16.r),
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                           ),
                           alignment: Alignment.center,
                           child: Text(

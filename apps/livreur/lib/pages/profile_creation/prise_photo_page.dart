@@ -10,11 +10,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_le_transporteur/core/utils/permission_helper.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
 
-class PrisePhotoPage extends StatelessWidget {
+class PrisePhotoPage extends StatefulWidget {
   final RegistrationData registrationData;
 
   const PrisePhotoPage({super.key, required this.registrationData});
 
+  @override
+  State<PrisePhotoPage> createState() => _PrisePhotoPageState();
+}
+
+class _PrisePhotoPageState extends State<PrisePhotoPage> {
   Future<void> _pickImage(BuildContext context, ImageSource source) async {
     // 1. Check Permission
     Permission permission;
@@ -50,13 +55,13 @@ class PrisePhotoPage extends StatelessWidget {
     try {
       final XFile? pickedFile = await picker.pickImage(source: source);
       if (pickedFile != null) {
-        if (context.mounted) {
-          registrationData.photoProfilePath = pickedFile.path;
+        if (mounted) {
+          widget.registrationData.photoProfilePath = pickedFile.path;
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => PhotoPrisePage(
-                registrationData: registrationData,
+                registrationData: widget.registrationData,
                 imagePath: pickedFile.path,
               ),
             ),
@@ -65,7 +70,7 @@ class PrisePhotoPage extends StatelessWidget {
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
            SnackBar(content: Text('Erreur lors de la prise de photo: $e')),
         );

@@ -62,7 +62,7 @@ class ClientOrdersPage extends StatelessWidget {
                     children: [
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                        decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8.r)),
+                        decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8.r)),
                         child: Text(order['status'], style: GoogleFonts.poppins(fontSize: 10.sp, color: Colors.green, fontWeight: FontWeight.bold)),
                       ),
                       Text(order['total'], style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.primary)),

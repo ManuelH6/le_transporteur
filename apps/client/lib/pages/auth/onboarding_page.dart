@@ -62,8 +62,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withOpacity(0.1),
-                          Colors.black.withOpacity(0.8),
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.8),
                         ],
                       ),
                     ),
@@ -115,7 +115,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                   SizedBox(height: 48.h),

@@ -61,7 +61,7 @@ class PermissionHelper {
               width: 60.w,
               height: 60.w,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.security, color: AppColors.primary, size: 30.sp), // Fallback icon

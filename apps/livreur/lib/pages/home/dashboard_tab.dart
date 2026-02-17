@@ -51,7 +51,7 @@ class DashboardTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(20.r),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -116,7 +116,7 @@ class DashboardTab extends StatelessWidget {
                     ),
                   ),
                 ),
-                Divider(color: Colors.white.withOpacity(0.2), height: 24.h),
+                Divider(color: Colors.white.withValues(alpha: 0.2), height: 24.h),
                 _buildStatRow("Livraisons Réussies", "100"),
                 SizedBox(height: 12.h),
                 _buildStatRow("Retours", "2"),
@@ -139,7 +139,7 @@ class DashboardTab extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

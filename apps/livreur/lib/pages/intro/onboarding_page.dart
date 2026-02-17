@@ -49,29 +49,32 @@ class OnboardingPage extends StatelessWidget {
               child: Column(
                 children: [
                   SizedBox(height: 40.h),
-                  RichText(
-                    textAlign: TextAlign.left,
-                    text: TextSpan(
-                      style: GoogleFonts.poppins(
-                        fontSize: 22.sp,
-                        color: AppColors.text,
-                        fontWeight: FontWeight.bold,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: RichText(
+                      textAlign: TextAlign.left,
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontSize: 22.sp,
+                          color: AppColors.text,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Bienvenue chez\n",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          TextSpan(
+                            text: "LE TRANSPORTEUR",
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                      children: [
-                        TextSpan(
-                          text: "Bienvenue chez\n",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        TextSpan(
-                          text: "LE TRANSPORTEUR",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                   SizedBox(height: 40.h),
@@ -89,7 +92,6 @@ class OnboardingPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 13.sp,
-                      color: AppColors.text.withOpacity(0.7),
                       height: 1.4,
                     ),
                   ),

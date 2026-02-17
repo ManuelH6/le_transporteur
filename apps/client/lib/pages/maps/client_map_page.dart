@@ -74,7 +74,7 @@ class _ClientMapPageState extends State<ClientMapPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16.r),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))
                   ],
                 ),
                 padding: EdgeInsets.all(16.w),
@@ -110,10 +110,15 @@ class _ClientMapPageState extends State<ClientMapPage> {
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () {
                   setState(() {
-                    if(_state == ClientMapState.details) _state = ClientMapState.selection;
-                    else if(_state == ClientMapState.recherche) _state = ClientMapState.details;
-                    else if(_state == ClientMapState.proposition) _state = ClientMapState.details;
-                    else if(_state == ClientMapState.suivi) _state = ClientMapState.selection;
+                    if(_state == ClientMapState.details) {
+                      _state = ClientMapState.selection;
+                    } else if(_state == ClientMapState.recherche) {
+                      _state = ClientMapState.details;
+                    } else if(_state == ClientMapState.proposition) {
+                      _state = ClientMapState.details;
+                    } else if(_state == ClientMapState.suivi) {
+                      _state = ClientMapState.selection;
+                    }
                   });
                 },
               ),
@@ -133,7 +138,7 @@ class _ClientMapPageState extends State<ClientMapPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 15, offset: const Offset(0, -5))
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, -5))
                   ],
                 ),
                 child: _buildBottomSheetContent(),
@@ -223,7 +228,7 @@ class _ClientMapPageState extends State<ClientMapPage> {
                decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12.r), border: Border.all(color: Colors.grey[200]!)),
                child: Row(
                  children: [
-                   CircleAvatar(radius: 25.r, backgroundColor: AppColors.primary.withOpacity(0.1), child: const Icon(Icons.person, color: AppColors.primary, size: 30)),
+                   CircleAvatar(radius: 25.r, backgroundColor: AppColors.primary.withValues(alpha: 0.1), child: const Icon(Icons.person, color: AppColors.primary, size: 30)),
                    SizedBox(width: 12.w),
                    Expanded(
                      child: Column(

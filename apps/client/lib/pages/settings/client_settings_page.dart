@@ -30,7 +30,7 @@ class ClientSettingsPage extends StatelessWidget {
                 children: [
                    CircleAvatar(
                      radius: 40.r,
-                     backgroundColor: AppColors.primary.withOpacity(0.1),
+                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                      child: const Icon(Icons.person, size: 50, color: AppColors.primary),
                    ),
                    SizedBox(height: 12.h),

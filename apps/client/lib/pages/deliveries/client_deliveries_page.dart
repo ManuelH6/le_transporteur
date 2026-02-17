@@ -121,7 +121,7 @@ class _ClientDeliveriesPageState extends State<ClientDeliveriesPage> with Single
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
-                        color: data['status'] == "En cours" ? Colors.blue.withOpacity(0.1) : Colors.green.withOpacity(0.1),
+                        color: data['status'] == "En cours" ? Colors.blue.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
                       child: Text(

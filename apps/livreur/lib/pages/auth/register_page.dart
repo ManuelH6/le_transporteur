@@ -8,7 +8,6 @@ import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
-import 'package:livreur_le_transporteur/pages/auth/login_page.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -57,7 +56,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       Positioned.fill(
                         child: ColorFiltered(
                           colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.3),
+                            Colors.black.withValues(alpha: 0.3),
                             BlendMode.darken,
                           ),
                           child: AppImage(
@@ -122,15 +121,15 @@ class _RegisterPageState extends State<RegisterPage> {
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: InternationalPhoneNumberInput(
                               onInputChanged: (PhoneNumber number) {
-                                print(number.phoneNumber);
+                                // Debug: print(number.phoneNumber);
                               },
                               onInputValidated: (bool value) {
-                                print(value);
+                                // Debug: print(value);
                               },
                               selectorConfig: const SelectorConfig(
                                 selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
@@ -152,7 +151,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 contentPadding: EdgeInsets.only(bottom: 12.h), // Align text
                               ),
                               onSaved: (PhoneNumber number) {
-                                print('On Saved: $number');
+                                // Debug: print('On Saved: $number');
                               },
                             ),
                           ),
@@ -263,7 +262,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 Navigator.pop(context); // Go back to login
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary.withOpacity(0.1),
+                                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
