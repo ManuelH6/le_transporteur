@@ -9,6 +9,7 @@ import 'package:livreur_le_transporteur/pages/home/dashboard_tab.dart';
 import 'package:livreur_le_transporteur/pages/deliveries/mes_livraisons_page.dart';
 import 'package:livreur_le_transporteur/pages/profile/profile_page.dart';
 import 'package:livreur_le_transporteur/pages/settings/settings_page.dart';
+import 'package:livreur_le_transporteur/pages/notifications/notifications_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,7 +24,6 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const DashboardTab(),
     const MesLivraisonsPage(),
-    const ProfilePage(),
     const SettingsPage(),
   ];
 
@@ -62,12 +62,8 @@ class _HomePageState extends State<HomePage> {
               label: "Accueil",
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.local_shipping), // Box icon alternative
+              icon: Icon(Icons.local_shipping),
               label: "Mes livraisons",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profil",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings),
@@ -104,7 +100,14 @@ class _HomePageState extends State<HomePage> {
           alignment: Alignment.topRight,
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationsPage(),
+                  ),
+                );
+              },
               icon: Icon(Icons.notifications_outlined, color: AppColors.text, size: 24.sp),
             ),
             Positioned(
@@ -124,11 +127,34 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-         IconButton(
-          onPressed: () {},
-          icon: Icon(Icons.more_vert, color: AppColors.text, size: 24.sp),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
+          },
+          child: Container(
+            margin: EdgeInsets.only(right: 16.w),
+            width: 40.w,
+            height: 40.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Center(
+              child: Text(
+                "S",
+                style: GoogleFonts.poppins(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
         ),
-        SizedBox(width: 8.w),
       ],
     );
   }
