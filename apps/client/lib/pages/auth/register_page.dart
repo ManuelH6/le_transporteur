@@ -9,6 +9,8 @@ import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:client_le_transporteur/pages/auth/login_page.dart';
 import 'package:client_le_transporteur/pages/home/client_home_page.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
 
 
 class RegisterPage extends StatefulWidget {
@@ -24,8 +26,20 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  String _selectedIsoCode = 'BJ';
+  PhoneNumber number = PhoneNumber(isoCode: 'BJ');
 
   void _register() {
+    if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UnavailableCountryScreen(countryCode: _selectedIsoCode),
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     
     // Simulate API Call & OTP Flow
@@ -110,7 +124,39 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   AppTextField(controller: _nameController, hintText: "Nom et prénom", prefixIcon: Icons.person),
                   SizedBox(height: 12.h),
-                  AppTextField(controller: _phoneController, hintText: "Numéro de téléphone", prefixIcon: Icons.phone, keyboardType: TextInputType.phone),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: InternationalPhoneNumberInput(
+                      onInputChanged: (PhoneNumber number) {
+                        setState(() {
+                          _selectedIsoCode = number.isoCode ?? 'BJ';
+                        });
+                      },
+                      countries: const ['BJ', 'TG', 'CG', 'CI', 'NG', 'GH'],
+                      selectorConfig: const SelectorConfig(
+                        selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+                        useEmoji: true,
+                      ),
+                      ignoreBlank: false,
+                      autoValidateMode: AutovalidateMode.disabled,
+                      selectorTextStyle: TextStyle(color: Colors.black, fontSize: 14.sp),
+                      initialValue: number,
+                      textFieldController: _phoneController,
+                      formatInput: false,
+                      textStyle: TextStyle(fontSize: 14.sp, color: Colors.black),
+                      keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+                      inputDecoration: InputDecoration(
+                        hintText: 'Numéro de téléphone',
+                        hintStyle: TextStyle(fontSize: 14.sp),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.only(bottom: 12.h),
+                      ),
+                    ),
+                  ),
                   SizedBox(height: 12.h),
                   AppTextField(controller: _passwordController, hintText: "Mot de passe", prefixIcon: Icons.lock_outline, isPassword: true),
                   SizedBox(height: 12.h),

@@ -8,6 +8,7 @@ import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
+import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -27,6 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
   
   String initialCountry = 'BJ';
   PhoneNumber number = PhoneNumber(isoCode: 'BJ');
+  String _selectedIsoCode = 'BJ';
 
   @override
   void dispose() {
@@ -126,11 +128,14 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             child: InternationalPhoneNumberInput(
                               onInputChanged: (PhoneNumber number) {
-                                // Debug: print(number.phoneNumber);
+                                setState(() {
+                                  _selectedIsoCode = number.isoCode ?? 'BJ';
+                                });
                               },
                               onInputValidated: (bool value) {
                                 // Debug: print(value);
                               },
+                              countries: const ['BJ', 'TG', 'CG', 'CI', 'NG', 'GH'],
                               selectorConfig: const SelectorConfig(
                                 selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
                                 useEmoji: true,
@@ -189,6 +194,16 @@ class _RegisterPageState extends State<RegisterPage> {
                             height: 50.h,
                             child: ElevatedButton(
                               onPressed: () {
+                                if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UnavailableCountryScreen(countryCode: _selectedIsoCode),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 if (_formKey.currentState!.validate()) {
                                   // Create RegistrationData
                                   final registrationData = RegistrationData(
@@ -196,6 +211,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     email: _emailController.text,
                                     telephone: _phoneController.text, // or full phone from input
                                     password: _passwordController.text,
+                                    countryCode: _selectedIsoCode,
                                   );
 
                                   Navigator.push(

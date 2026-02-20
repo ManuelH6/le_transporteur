@@ -12,6 +12,10 @@ class AppTextField extends StatefulWidget {
   final bool isPassword;
   final FormFieldValidator<String>? validator;
   final TextInputType keyboardType;
+  final FocusNode? focusNode;
+  final ValueChanged<String>? onFieldSubmitted;
+  final int? maxLines;
+  final int? minLines;
 
   const AppTextField({
     super.key,
@@ -22,6 +26,10 @@ class AppTextField extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     this.keyboardType = TextInputType.text,
+    this.focusNode,
+    this.onFieldSubmitted,
+    this.maxLines = 1,
+    this.minLines,
   });
 
 
@@ -36,8 +44,12 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
+      focusNode: widget.focusNode,
+      onFieldSubmitted: widget.onFieldSubmitted,
       obscureText: widget.isPassword && _obscureText,
       keyboardType: widget.keyboardType,
+      maxLines: widget.isPassword ? 1 : widget.maxLines,
+      minLines: widget.minLines,
       validator: widget.validator ??
           (value) {
             if (value == null || value.isEmpty) {

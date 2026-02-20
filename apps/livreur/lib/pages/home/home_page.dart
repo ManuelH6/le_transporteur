@@ -7,6 +7,7 @@ import 'package:shared_le_transporteur/core/constants/assets.dart';
 
 import 'package:livreur_le_transporteur/pages/home/dashboard_tab.dart';
 import 'package:livreur_le_transporteur/pages/deliveries/mes_livraisons_page.dart';
+import 'package:livreur_le_transporteur/pages/orders/available_orders_page.dart';
 import 'package:livreur_le_transporteur/pages/profile/profile_page.dart';
 import 'package:livreur_le_transporteur/pages/settings/settings_page.dart';
 import 'package:livreur_le_transporteur/pages/notifications/notifications_page.dart';
@@ -23,6 +24,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const DashboardTab(),
+    const AvailableOrdersPage(),
     const MesLivraisonsPage(),
     const SettingsPage(),
   ];
@@ -60,6 +62,10 @@ class _HomePageState extends State<HomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_filled),
               label: "Accueil",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.list_alt),
+              label: "Commandes",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.local_shipping),

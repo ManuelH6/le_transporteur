@@ -8,9 +8,22 @@ import 'package:livreur_le_transporteur/pages/profile_creation/identite_validee_
 
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 
-class PieceIdentitePage extends StatelessWidget {
+class PieceIdentitePage extends StatefulWidget {
   final RegistrationData registrationData;
   const PieceIdentitePage({super.key, required this.registrationData});
+
+  @override
+  State<PieceIdentitePage> createState() => _PieceIdentitePageState();
+}
+
+class _PieceIdentitePageState extends State<PieceIdentitePage> {
+  String? _selectedIdType;
+  final List<String> _idTypes = [
+    'CIP/CIPR',
+    'Passeport',
+    'Carte Nationale',
+    'Permis de conduire',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +70,53 @@ class PieceIdentitePage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 30.h),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Type de pièce",
+                  style: GoogleFonts.poppins(
+                     fontSize: 12.sp,
+                     color: Colors.grey[600],
+                     fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(8.r),
+                   border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedIdType,
+                    hint: Text(
+                      "Sélectionnez le type de pièce",
+                      style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey),
+                    ),
+                    isExpanded: true,
+                    items: _idTypes.map((String type) {
+                      return DropdownMenuItem<String>(
+                        value: type,
+                        child: Text(
+                          type,
+                          style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.black),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedIdType = newValue;
+                        widget.registrationData.pieceIdentiteType = newValue;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.h),
               _buildUploadButton("Verso de la pièce"),
               SizedBox(height: 16.h),
               _buildUploadButton("Recto de la pièce"),
@@ -68,7 +128,7 @@ class PieceIdentitePage extends StatelessWidget {
                 onPressed: () {
                    Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => IdentiteValideePage(registrationData: registrationData)),
+                      MaterialPageRoute(builder: (context) => IdentiteValideePage(registrationData: widget.registrationData)),
                     );
                 },
               ),

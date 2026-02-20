@@ -8,6 +8,7 @@ import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/pages/home/home_page.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:livreur_le_transporteur/pages/auth/register_page.dart';
+import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 
 class LoginPage extends StatefulWidget {
@@ -24,6 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _rememberMe = false;
   String initialCountry = 'BJ';
   PhoneNumber number = PhoneNumber(isoCode: 'BJ');
+  String _selectedIsoCode = 'BJ';
 
   @override
   void dispose() {
@@ -117,11 +119,14 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           child: InternationalPhoneNumberInput(
                             onInputChanged: (PhoneNumber number) {
-                              // Debug: print(number.phoneNumber);
+                              setState(() {
+                                _selectedIsoCode = number.isoCode ?? 'BJ';
+                              });
                             },
                             onInputValidated: (bool value) {
                               // Debug: print(value);
                             },
+                            countries: const ['BJ', 'TG', 'CG', 'CI', 'NG', 'GH'],
                             selectorConfig: const SelectorConfig(
                               selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
                               useEmoji: true,
@@ -214,6 +219,16 @@ class _LoginPageState extends State<LoginPage> {
                           height: 50.h,
                           child: ElevatedButton(
                             onPressed: () {
+                              if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => UnavailableCountryScreen(countryCode: _selectedIsoCode),
+                                  ),
+                                );
+                                return;
+                              }
+
                               if (_formKey.currentState!.validate()) {
                                  // Login logic simulated
                                   Navigator.push(

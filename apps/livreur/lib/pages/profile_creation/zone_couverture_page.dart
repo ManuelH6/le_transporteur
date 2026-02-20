@@ -19,14 +19,43 @@ class ZoneCouverturePage extends StatefulWidget {
 class _ZoneCouverturePageState extends State<ZoneCouverturePage> {
   bool _acceptedTerms = false;
   String? _selectedCity;
-  final List<String> _cities = [
-    'Benin - Cotonou',
-    'Benin - Porto-Novo',
-    'Benin - Parakou',
-    'Benin - Abomey-Calavi',
-    'Benin - Bohicon',
-    'Benin - Natitingou',
-  ];
+  List<String> _cities = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCities();
+  }
+
+  void _loadCities() {
+    final countryCode = widget.registrationData.countryCode ?? 'BJ';
+    switch (countryCode) {
+      case 'BJ':
+        _cities = [
+          'Cotonou',
+          'Porto-Novo',
+          'Bohicon',
+          'Natitingou',
+          'Abomey',
+          'Parakou',
+          'Lokossa',
+          'Ouidah',
+          'Zè',
+          'Sèmè-Kraké',
+          'Sèmè-Podji',
+          'Pahou',
+        ];
+        break;
+      case 'TG':
+        _cities = ['Lomé', 'Kara', 'Sokodé', 'Kpalimé', 'Atakpamé'];
+        break;
+      case 'CG':
+        _cities = ['Brazzaville', 'Pointe-Noire', 'Dolisie'];
+        break;
+      default:
+        _cities = ['Capitale'];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
