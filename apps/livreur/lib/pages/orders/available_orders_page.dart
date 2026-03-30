@@ -24,6 +24,8 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
   }
 
   void _loadCommandes() {
+    // Initialize mock data first
+    MockDatabase().genererDonneesInitiales();
     final all = MockDatabase().getCommandes();
     setState(() {
       _commandes = all.where((c) => c.statut == 'Disponible').toList();
@@ -44,7 +46,7 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         title: Text(
-          "Commandes disponibles",
+          "Courses disponibles",
           style: GoogleFonts.poppins(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
@@ -172,12 +174,16 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
                     children: [
                       Icon(Icons.local_offer_outlined, color: Colors.green, size: 16.sp),
                       SizedBox(width: 8.w),
-                      Text(
-                        "Proposition client : \${commande.propositionClient!.toInt()} FCFA",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green,
+                      Expanded(
+                        child: Text(
+                          "Proposition client : ${commande.propositionClient!.toInt()} FCFA",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

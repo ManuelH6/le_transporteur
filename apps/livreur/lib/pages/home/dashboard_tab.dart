@@ -84,23 +84,6 @@ class DashboardTab extends StatelessWidget {
                   height: 1.2,
                 ),
               ),
-              SizedBox(height: constraints.maxWidth * 0.02),
-              Row(
-                children: [
-                  Icon(Icons.trending_up, color: Colors.greenAccent, size: constraints.maxWidth * 0.045),
-                  SizedBox(width: constraints.maxWidth * 0.015),
-                  Flexible(
-                    child: Text(
-                      "+15% vs semaine dernière",
-                      style: GoogleFonts.poppins(
-                        fontSize: constraints.maxWidth * 0.033,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.95),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               SizedBox(height: constraints.maxWidth * 0.05),
               Container(
                 padding: EdgeInsets.all(constraints.maxWidth * 0.04),

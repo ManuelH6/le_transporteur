@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
+import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
 import 'package:shared_le_transporteur/services/mock_database.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
@@ -55,6 +56,20 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     }
   }
 
+  void _appelerDirect(String phone) async {
+    final url = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Impossible de passer l\'appel', style: GoogleFonts.poppins()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _confirmerPrix(double prix) {
     setState(() {
       _commande.statut = 'Prix confirmé';
@@ -64,8 +79,42 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     MockDatabase().mettreAJourCommande(_commande);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Prix confirmé : \${prix.toInt()} FCFA', style: GoogleFonts.poppins()),
+        content: Text('Prix confirmé : ${prix.toInt()} FCFA', style: GoogleFonts.poppins()),
         backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showProposePriceDialog() {
+    final priceController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Proposer un prix', style: GoogleFonts.poppins()),
+        content: TextField(
+          controller: priceController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            hintText: 'Entrez votre prix',
+            suffixText: 'Fcfa',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final price = double.tryParse(priceController.text);
+              if (price != null) {
+                Navigator.pop(context);
+                _confirmerPrix(price);
+              }
+            },
+            child: const Text('Proposer'),
+          ),
+        ],
       ),
     );
   }
@@ -219,7 +268,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      "\${_commande.propositionClient!.toInt()} FCFA",
+                      "${_commande.propositionClient!.toInt()} FCFA",
                       style: GoogleFonts.poppins(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
@@ -250,20 +299,45 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 ),
               )
             else ...[
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _contacterWhatsApp(_commande.pickupPhone),
-                  icon: const Icon(Icons.chat, color: Colors.green),
-                  label: Text(
-                    "Contacter sur WhatsApp",
-                    style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: Colors.green),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16.h),
-                    side: const BorderSide(color: Colors.green),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                  ),
+              // Contact Section
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      "Contacter via",
+                      style: GoogleFonts.poppins(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => _appelerDirect(_commande.pickupPhone),
+                      icon: const Icon(Icons.phone, color: AppColors.primary),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    SizedBox(width: 8.w),
+                    IconButton(
+                      onPressed: () => _contacterWhatsApp(_commande.pickupPhone),
+                      icon: AppImage(
+                        assetPath: 'assets/WhatsApp.svg',
+                        width: 24.sp,
+                        height: 24.sp,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.green.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 16.h),
@@ -288,7 +362,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          // Show dialog to propose new price
+                          _showProposePriceDialog();
                         },
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 16.h),

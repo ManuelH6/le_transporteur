@@ -255,6 +255,11 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () => _showComingSoon("Politique de confidentialité"),
         ),
         _buildNavigationTile(
+          icon: Icons.privacy_tip,
+          title: "Mentions Légales",
+          onTap: () => _showComingSoon("Mentions Légales"),
+        ),
+        _buildNavigationTile(
           icon: Icons.info_outline,
           title: "Version de l'app",
           subtitle: "v1.0.0",

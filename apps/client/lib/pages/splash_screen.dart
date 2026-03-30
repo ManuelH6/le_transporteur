@@ -4,7 +4,7 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 
-import 'package:client_le_transporteur/pages/auth/onboarding_page.dart';
+import 'package:client_le_transporteur/pages/intro/onboarding_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -44,17 +44,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _controller.dispose();
     super.dispose();
   }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.white,
       body: Center(
         child: FadeTransition(
           opacity: _opacity,
           child: AppImage(
-             assetPath: AppAssets.logoWhite,
-             width: 200.w,
+             assetPath: AppAssets.logoOrangeSlog,
+             width: 280.w,
              fit: BoxFit.contain,
           ),
         ),

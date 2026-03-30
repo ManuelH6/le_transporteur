@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Primary brand color (orange-red)
-  static const Color primaryColor = Color(0xFFFF491D);
+  static const Color primaryColor = Color(0xFFFC471A);
 
   // Secondary brand color (yellow)
   static const Color secondaryColor = Color(0xFFFEBE05);

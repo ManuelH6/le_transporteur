@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class AppColors {
-  static const Color primary = Color(0xFFFF491D);
+  static const Color primary = Color(0xFFFC471A);
   static const Color secondary = Color(0xFFFEBE05);
   static const Color text = Color(0xFF333333);
   static const Color background = Color(0xFFFFF5F0);

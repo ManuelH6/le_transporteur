@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.list_alt),
-              label: "Commandes",
+              label: "Courses",
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.local_shipping),

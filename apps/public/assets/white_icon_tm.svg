@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Logo_T" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 1080">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: SFTRitamSansTRIALRoman-ExBold, 'SFT Ritam Sans TRIAL Variable';
+        font-size: 25px;
+        font-variation-settings: 'wght' 800, 'slnt' 0;
+        font-weight: 700;
+      }
+
+      .cls-1, .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g>
+    <path class="cls-2" d="M593.66,487.7l20.25-63.76h-104.41l-31.64,99.52h66.9c22.45,0,42.09-14.37,48.89-35.76Z"/>
+    <g>
+      <path class="cls-2" d="M767.04,463.9c-22.45,0-42.09,14.37-48.89,35.76l-20.25,63.76h104.41l31.63-99.52h-66.9Z"/>
+      <path class="cls-2" d="M704.75,505.85c6.9-21.73,3.14-44.75-10.32-63.16-13.47-18.4-34.27-28.96-57.07-28.96h-7.77l-81.33,255.87h52.69c30.95,0,58.03-19.81,67.4-49.3l5.65-17.79h.04l26.86-84.55,3.86-12.11Z"/>
+    </g>
+  </g>
+  <text class="cls-1" transform="translate(834.08 431.65)"><tspan x="0" y="0">TM</tspan></text>
+</svg>

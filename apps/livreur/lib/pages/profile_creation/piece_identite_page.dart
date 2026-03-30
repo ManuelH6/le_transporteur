@@ -117,9 +117,11 @@ class _PieceIdentitePageState extends State<PieceIdentitePage> {
                 ),
               ),
               SizedBox(height: 20.h),
-              _buildUploadButton("Verso de la pièce"),
-              SizedBox(height: 16.h),
               _buildUploadButton("Recto de la pièce"),
+              if (_selectedIdType != 'CIP/CIPR' && _selectedIdType != 'Passeport') ...[
+                SizedBox(height: 16.h),
+                _buildUploadButton("Verso de la pièce"),
+              ],
               
               const Spacer(),
               
