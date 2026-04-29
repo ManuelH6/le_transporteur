@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:ms_undraw/ms_undraw.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
+import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/identite_validee_page.dart';
 
 import 'package:livreur_le_transporteur/models/registration_data.dart';
@@ -24,6 +25,13 @@ class _PieceIdentitePageState extends State<PieceIdentitePage> {
     'Carte Nationale',
     'Permis de conduire',
   ];
+  final TextEditingController _idNumberController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idNumberController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +124,14 @@ class _PieceIdentitePageState extends State<PieceIdentitePage> {
                   ),
                 ),
               ),
+              SizedBox(height: 16.h),
+              AppTextField(
+                controller: _idNumberController,
+                hintText: "Numéro de la pièce",
+                prefixIcon: Icons.badge_outlined,
+              ),
               SizedBox(height: 20.h),
+
               _buildUploadButton("Recto de la pièce"),
               if (_selectedIdType != 'CIP/CIPR' && _selectedIdType != 'Passeport') ...[
                 SizedBox(height: 16.h),
@@ -128,6 +143,7 @@ class _PieceIdentitePageState extends State<PieceIdentitePage> {
               AppButton(
                 text: "Soumettre",
                 onPressed: () {
+                   widget.registrationData.pieceIdentiteNumero = _idNumberController.text;
                    Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => IdentiteValideePage(registrationData: widget.registrationData)),

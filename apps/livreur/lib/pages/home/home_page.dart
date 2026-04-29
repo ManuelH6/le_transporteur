@@ -12,6 +12,9 @@ import 'package:livreur_le_transporteur/pages/profile/profile_page.dart';
 import 'package:livreur_le_transporteur/pages/settings/settings_page.dart';
 import 'package:livreur_le_transporteur/pages/notifications/notifications_page.dart';
 
+import 'package:shared_le_transporteur/api/v1/user_api.dart';
+import 'package:shared_le_transporteur/models/user.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -21,6 +24,26 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUser();
+  }
+
+  Future<void> _fetchUser() async {
+    try {
+      final user = await UserApi().getMe();
+      if (mounted) {
+        setState(() {
+          _user = user;
+        });
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
 
   final List<Widget> _pages = [
     const DashboardTab(),
@@ -93,7 +116,7 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       title: Text(
-        "Bon retour, Sam",
+        "Bon retour, ${_user?.name.split(' ').first ?? '...'}",
         style: GoogleFonts.poppins(
           fontSize: 16.sp,
           fontWeight: FontWeight.w600,
@@ -126,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                   shape: BoxShape.circle,
                 ),
                 child: Text(
-                  "5",
+                  "0",
                   style: TextStyle(color: Colors.white, fontSize: 8.sp, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -151,7 +174,7 @@ class _HomePageState extends State<HomePage> {
             ),
             child: Center(
               child: Text(
-                "S",
+                _user?.name.isNotEmpty == true ? _user!.name[0].toUpperCase() : "?",
                 style: GoogleFonts.poppins(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.bold,

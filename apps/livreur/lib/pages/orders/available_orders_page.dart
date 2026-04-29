@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
-import 'package:shared_le_transporteur/services/mock_database.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
 import 'package:livreur_le_transporteur/pages/orders/order_details_page.dart';
+import 'package:shared_le_transporteur/api/v1/order_api.dart';
 
 class AvailableOrdersPage extends StatefulWidget {
   const AvailableOrdersPage({super.key});
@@ -16,6 +16,8 @@ class AvailableOrdersPage extends StatefulWidget {
 
 class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
   List<Commande> _commandes = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -23,19 +25,34 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
     _loadCommandes();
   }
 
-  void _loadCommandes() {
-    // Initialize mock data first
-    MockDatabase().genererDonneesInitiales();
-    final all = MockDatabase().getCommandes();
+  Future<void> _loadCommandes() async {
     setState(() {
-      _commandes = all.where((c) => c.statut == 'Disponible').toList();
-      // Tri par prix suggéré médian descendant
-      _commandes.sort((a, b) {
-        final medianA = (a.prixSuggere[0] + a.prixSuggere[1]) / 2;
-        final medianB = (b.prixSuggere[0] + b.prixSuggere[1]) / 2;
-        return medianB.compareTo(medianA);
-      });
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final orders = await OrderApi().getAvailableOrders();
+      if (mounted) {
+        setState(() {
+          _commandes = orders;
+          // Sort by suggested price (custom logic)
+          _commandes.sort((a, b) {
+            final avgA = a.prixSuggere.isNotEmpty ? a.prixSuggere.reduce((a, b) => a + b) / a.prixSuggere.length : 0;
+            final avgB = b.prixSuggere.isNotEmpty ? b.prixSuggere.reduce((a, b) => a + b) / b.prixSuggere.length : 0;
+            return avgB.compareTo(avgA);
+          });
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -55,31 +72,45 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
         ),
         centerTitle: true,
       ),
-      body: _commandes.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox_outlined, size: 60.sp, color: Colors.grey[300]),
-                  SizedBox(height: 16.h),
-                  Text(
-                    "Aucune commande disponible",
-                    style: GoogleFonts.poppins(fontSize: 16.sp, color: Colors.grey),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 60.sp, color: Colors.red[300]),
+                      SizedBox(height: 16.h),
+                      Text("Erreur: $_error", style: GoogleFonts.poppins(color: Colors.red)),
+                      TextButton(onPressed: _loadCommandes, child: const Text("Réessayer")),
+                    ],
                   ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: () async => _loadCommandes(),
-              child: ListView.builder(
-                padding: EdgeInsets.all(16.w),
-                itemCount: _commandes.length,
-                itemBuilder: (context, index) {
-                  final commande = _commandes[index];
-                  return _buildOrderCard(commande);
-                },
-              ),
-            ),
+                )
+              : _commandes.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inbox_outlined, size: 60.sp, color: Colors.grey[300]),
+                          SizedBox(height: 16.h),
+                          Text(
+                            "Aucune commande disponible",
+                            style: GoogleFonts.poppins(fontSize: 16.sp, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () async => _loadCommandes(),
+                      child: ListView.builder(
+                        padding: EdgeInsets.all(16.w),
+                        itemCount: _commandes.length,
+                        itemBuilder: (context, index) {
+                          final commande = _commandes[index];
+                          return _buildOrderCard(commande);
+                        },
+                      ),
+                    ),
     );
   }
 

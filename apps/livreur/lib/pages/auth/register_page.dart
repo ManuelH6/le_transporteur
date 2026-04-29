@@ -6,6 +6,9 @@ import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
+import 'package:shared_le_transporteur/api/v1/auth_api.dart';
+import 'package:shared_le_transporteur/services/notification_service.dart';
+import 'package:livreur_le_transporteur/pages/auth/login_page.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
 import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
@@ -29,6 +32,15 @@ class _RegisterPageState extends State<RegisterPage> {
   String initialCountry = 'BJ';
   PhoneNumber number = PhoneNumber(isoCode: 'BJ');
   String _selectedIsoCode = 'BJ';
+  String _selectedGender = 'other';
+  String _fullPhoneNumber = '';
+
+  final List<Map<String, String>> _genders = [
+    {'display': 'Homme', 'value': 'man'},
+    {'display': 'Femme', 'value': 'women'},
+    {'display': 'Autre', 'value': 'other'},
+  ];
+
 
   @override
   void dispose() {
@@ -130,6 +142,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               onInputChanged: (PhoneNumber number) {
                                 setState(() {
                                   _selectedIsoCode = number.isoCode ?? 'BJ';
+                                  _fullPhoneNumber = number.phoneNumber ?? '';
+
                                 });
                               },
                               onInputValidated: (bool value) {
@@ -171,6 +185,38 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           SizedBox(height: 16.h),
 
+                          // Gender
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedGender,
+                                decoration: InputDecoration(
+                                  border: InputBorder.none,
+                                  prefixIcon: Icon(Icons.people_outline, size: 20.sp, color: Colors.grey),
+                                  labelText: 'Genre',
+                                  labelStyle: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                                ),
+                                items: _genders.map((gender) {
+                                  return DropdownMenuItem<String>(
+                                    value: gender['value'],
+                                    child: Text(gender['display']!, style: TextStyle(fontSize: 14.sp)),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() => _selectedGender = value);
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 16.h),
+
                           // Password
                           AppTextField(
                             controller: _passwordController,
@@ -193,7 +239,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             width: double.infinity,
                             height: 50.h,
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
                                   Navigator.push(
                                     context,
@@ -209,32 +255,44 @@ class _RegisterPageState extends State<RegisterPage> {
                                   final registrationData = RegistrationData(
                                     nomComplet: _nameController.text,
                                     email: _emailController.text,
-                                    telephone: _phoneController.text, // or full phone from input
+                                    telephone: _fullPhoneNumber.isNotEmpty ? _fullPhoneNumber : _phoneController.text,
+
                                     password: _passwordController.text,
                                     countryCode: _selectedIsoCode,
+                                    genderrole: _selectedGender,
                                   );
 
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => OtpVerificationScreen(
-                                        phoneNumber: _phoneController.text, // Use actual input
-                                        onVerified: (code) {
-                                          // Navigate to Profile Creation Flow Step 2
+                                  try {
+                                    final authApi = AuthApi();
+                                    await authApi.register(
+                                      name: _nameController.text,
+                                      email: _emailController.text,
+                                      password: _passwordController.text,
+                                      phoneNumber: _fullPhoneNumber.isNotEmpty ? _fullPhoneNumber : _phoneController.text,
+
+                                      countryCode: _selectedIsoCode,
+                                      genderrole: _selectedGender,
+                                      signupIntent: 'livreur',
+                                    );
+
+                                    if (mounted) {
+                                      NotificationService().showSuccessDialog(
+                                        title: "Inscription réussie",
+                                        message: "Veuillez consulter votre boîte mail pour valider votre compte avant de vous connecter.",
+                                        onConfirm: () {
                                           Navigator.pushAndRemoveUntil(
                                             context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ZoneCouverturePage(registrationData: registrationData),
-                                            ),
+                                            MaterialPageRoute(builder: (context) => LoginPage()),
                                             (route) => false,
                                           );
                                         },
-                                        onResend: () {
-                                          // Resend logic
-                                        },
-                                      ),
-                                    ),
-                                  );
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      NotificationService().showError(e);
+                                    }
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/pages/home/home_page.dart';
-import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:livreur_le_transporteur/pages/auth/register_page.dart';
-import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
+
+import 'package:shared_le_transporteur/api/v1/auth_api.dart';
+import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
+import 'package:livreur_le_transporteur/pages/profile_creation/analyse_encours_page.dart';
+import 'package:livreur_le_transporteur/models/registration_data.dart';
+import 'package:shared_le_transporteur/services/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,18 +23,72 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController(); // Assuming password field exists too
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _rememberMe = false;
-  String initialCountry = 'BJ';
-  PhoneNumber number = PhoneNumber(isoCode: 'BJ');
-  String _selectedIsoCode = 'BJ';
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _login() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+      try {
+        final authApi = AuthApi();
+        final response = await authApi.login(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        if (mounted) {
+          setState(() => _isLoading = false);
+          final user = response.user;
+          
+          if (user.role != 'livreur') {
+             throw Exception("Ce compte n'est pas un compte livreur.");
+          }
+
+          if (user.livreurRequestStatus == 'approved') {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+              (route) => false,
+            );
+          } else if (user.livreurRequestStatus == 'pending') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AnalyseEncoursPage(
+                registrationData: RegistrationData(), // Add empty data as placeholder or fetch if needed
+              )),
+            );
+          } else {
+            // Case 'none' or 'rejected'
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ZoneCouverturePage(
+                  registrationData: RegistrationData(
+                    nomComplet: user.name,
+                    email: user.email,
+                    telephone: user.phoneNumber,
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          NotificationService().showError(e);
+        }
+      }
+    }
   }
 
   @override
@@ -110,46 +167,12 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                           // Phone Number Field
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: InternationalPhoneNumberInput(
-                            onInputChanged: (PhoneNumber number) {
-                              setState(() {
-                                _selectedIsoCode = number.isoCode ?? 'BJ';
-                              });
-                            },
-                            onInputValidated: (bool value) {
-                              // Debug: print(value);
-                            },
-                            countries: const ['BJ', 'TG', 'CG', 'CI', 'NG', 'GH'],
-                            selectorConfig: const SelectorConfig(
-                              selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-                              useEmoji: true,
-                            ),
-                            ignoreBlank: false,
-                            autoValidateMode: AutovalidateMode.disabled,
-                            selectorTextStyle: TextStyle(color: Colors.black, fontSize: 14.sp),
-                            initialValue: number,
-                            textFieldController: _phoneController,
-                            formatInput: false,
-                             textStyle: TextStyle(fontSize: 14.sp, color: Colors.black),
-                            keyboardType:
-                                const TextInputType.numberWithOptions(signed: true, decimal: true),
-                            inputDecoration: InputDecoration(
-                              hintText: 'Numéro de téléphone ...',
-                              hintStyle: TextStyle(fontSize: 14.sp),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.only(bottom: 12.h), // Align text
-                            ),
-                            onSaved: (PhoneNumber number) {
-                              // Debug: print('On Saved: $number');
-                            },
-                          ),
+                          // Email Field
+                        AppTextField(
+                          controller: _emailController,
+                          hintText: "Adresse email",
+                          prefixIcon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
                         ),
                         SizedBox(height: 16.h),
 
@@ -217,56 +240,25 @@ class _LoginPageState extends State<LoginPage> {
                         SizedBox(
                           width: double.infinity,
                           height: 50.h,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => UnavailableCountryScreen(countryCode: _selectedIsoCode),
+                          child: _isLoading 
+                            ? const Center(child: CircularProgressIndicator())
+                            : ElevatedButton(
+                                onPressed: _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.r),
                                   ),
-                                );
-                                return;
-                              }
-
-                              if (_formKey.currentState!.validate()) {
-                                 // Login logic simulated
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => OtpVerificationScreen(
-                                        phoneNumber: _phoneController.text, // Use actual input
-                                        onVerified: (code) {
-                                          // Navigate to Home
-                                          Navigator.pushAndRemoveUntil(
-                                            context,
-                                            MaterialPageRoute(builder: (context) => const HomePage()),
-                                            (route) => false,
-                                          );
-                                        },
-                                        onResend: () {
-                                          // Resend logic
-                                        },
-                                      ),
-                                    ),
-                                  );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                                ),
+                                child: Text(
+                                  "Se connecter",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              "Se connecter",
-                              style: GoogleFonts.poppins(
-                                fontSize: 16.sp,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
                         ),
 
                         SizedBox(height: 20.h),
