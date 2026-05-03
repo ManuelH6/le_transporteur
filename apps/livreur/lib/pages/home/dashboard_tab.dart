@@ -3,6 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:livreur_le_transporteur/pages/transactions/transaction_history_page.dart';
+import 'package:shared_le_transporteur/api/v1/api_client.dart';
+import 'package:shared_le_transporteur/api/v1/order_api.dart';
+import 'package:shared_le_transporteur/api/v1/report_api.dart';
+import 'package:intl/intl.dart';
 
 class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
@@ -12,39 +16,114 @@ class DashboardTab extends StatefulWidget {
 }
 
 class _DashboardTabState extends State<DashboardTab> {
+  bool _isLoading = true;
+  Map<String, dynamic>? _summary;
+  final _currencyFormat = NumberFormat.currency(symbol: 'FCFA', decimalDigits: 0, locale: 'fr_FR');
+
   @override
   void initState() {
     super.initState();
+    _fetchSummary();
+  }
+
+  Future<void> _fetchSummary() async {
+    try {
+      final user = await ApiClient().user;
+      if (user == null) return;
+
+      // Fetch both summary and direct orders for better accuracy
+      final summary = await ReportApi().getHistoryMe();
+      final orders = await OrderApi().getOrdersByCourier(user.id!);
+      
+      if (mounted) {
+        setState(() {
+          // Merge or prioritize orders from OrderApi for the 'history' part
+          _summary = summary;
+          _summary!['history'] = orders.map((o) => o.toJson()).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hero Revenue Section
-          _buildRevenueHeroCard(),
-          SizedBox(height: 24.h),
-          
-          // Statistics Grid 2x2
-          _buildStatisticsGrid(),
-          SizedBox(height: 24.h),
-          
-          // Transaction History Access
-          _buildTransactionHistoryCard(context),
-          SizedBox(height: 24.h),
-          
-          // Detailed Statistics
-          _buildDetailedStats(),
-          SizedBox(height: 100.h), // Space for bottom navigation
-        ],
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final history = (_summary?['history'] as List?) ?? [];
+    
+    // NEW LOGIC
+    double grossTotal = 0;
+    double grossWeekly = 0;
+    double grossMonthly = 0;
+    int totalAccepted = history.length;
+    int totalDelivered = 0;
+    int todayDelivered = 0;
+    
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+    final weekThreshold = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+    final monthThreshold = DateTime(now.year, now.month, 1);
+
+    for (var item in history) {
+      final price = (item['finalPrice'] ?? item['propositionLivreur'] ?? item['estimatedPrice'] ?? 0.0).toDouble();
+      final status = item['status']?.toString().toLowerCase();
+      final dateStr = item['dateCreation'] ?? item['createdAt'];
+      final date = dateStr != null ? DateTime.tryParse(dateStr.toString()) ?? now : now;
+
+      grossTotal += price;
+      
+      if (date.isAfter(weekThreshold)) {
+        grossWeekly += price;
+      }
+      
+      if (date.isAfter(monthThreshold)) {
+        grossMonthly += price;
+      }
+
+      if (status == 'livree' || status == 'terminee' || status == 'terminée' || status == 'completed') {
+        totalDelivered++;
+        if (date.day == now.day && date.month == now.month && date.year == now.year) {
+          todayDelivered++;
+        }
+      }
+    }
+
+    final netTotal = grossTotal * 0.3;
+    final netMonthly = grossMonthly * 0.3;
+    final commissionTotal = grossTotal * 0.7;
+    final successRate = totalAccepted > 0 ? (totalDelivered / totalAccepted * 100).toInt() : 0;
+    final rating = (_summary?['stats']?['rating'] ?? _summary?['kpis']?['rating'] ?? 5.0).toDouble();
+
+    return RefreshIndicator(
+      onRefresh: _fetchSummary,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildRevenueHeroCard(grossWeekly, netTotal, netMonthly, commissionTotal, grossTotal),
+            SizedBox(height: 24.h),
+            _buildStatisticsGrid(todayDelivered, rating, totalDelivered, successRate),
+            SizedBox(height: 24.h),
+            _buildTransactionHistoryCard(context),
+            SizedBox(height: 24.h),
+            _buildDetailedStats(totalDelivered, successRate.toDouble()),
+            SizedBox(height: 100.h),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRevenueHeroCard() {
+  Widget _buildRevenueHeroCard(num weeklyGross, num netTotal, num netMonthly, num commission, num grossTotal) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
@@ -69,16 +148,41 @@ class _DashboardTabState extends State<DashboardTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.account_balance_wallet, color: Colors.white, size: constraints.maxWidth * 0.07),
-                  SizedBox(width: constraints.maxWidth * 0.03),
-                  Flexible(
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(6.w),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.account_balance_wallet, color: Colors.white, size: constraints.maxWidth * 0.05),
+                      ),
+                      SizedBox(width: constraints.maxWidth * 0.02),
+                      Text(
+                        "Gains Cumulés (30%)",
+                        style: GoogleFonts.poppins(
+                          fontSize: constraints.maxWidth * 0.038,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
                     child: Text(
-                      "Revenu Hebdomadaire",
+                      "SOLDE",
                       style: GoogleFonts.poppins(
-                        fontSize: constraints.maxWidth * 0.04,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: constraints.maxWidth * 0.025,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
@@ -86,26 +190,58 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
               SizedBox(height: constraints.maxWidth * 0.04),
               Text(
-                "25 000 FCFA",
+                _currencyFormat.format(netTotal),
                 style: GoogleFonts.poppins(
                   fontSize: constraints.maxWidth * 0.09,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  height: 1.2,
                 ),
               ),
-              SizedBox(height: constraints.maxWidth * 0.05),
+              SizedBox(height: 8.h),
+              Text(
+                "Ce mois: ${_currencyFormat.format(netMonthly)}",
+                style: GoogleFonts.poppins(
+                  fontSize: constraints.maxWidth * 0.035,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+              SizedBox(height: constraints.maxWidth * 0.06),
+              Divider(color: Colors.white.withValues(alpha: 0.1), height: 1),
+              SizedBox(height: constraints.maxWidth * 0.06),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildMiniStat("Total Courses", _currencyFormat.format(grossTotal), constraints),
+                  _buildMiniStat("Frais Service (70%)", _currencyFormat.format(commission), constraints),
+                ],
+              ),
+              SizedBox(height: constraints.maxWidth * 0.06),
               Container(
                 padding: EdgeInsets.all(constraints.maxWidth * 0.04),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+                  color: Colors.black.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16.r),
                 ),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildRevenueDetailRow("Revenu Total", "150 000 FCFA", constraints),
-                    SizedBox(height: constraints.maxWidth * 0.03),
-                    _buildRevenueDetailRow("Commission (30%)", "45 000 FCFA", constraints, isHighlight: true),
+                    Text(
+                      "Volume de la semaine",
+                      style: GoogleFonts.poppins(
+                        fontSize: constraints.maxWidth * 0.03,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      _currencyFormat.format(weeklyGross),
+                      style: GoogleFonts.poppins(
+                        fontSize: constraints.maxWidth * 0.035,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -113,6 +249,30 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, BoxConstraints constraints) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: constraints.maxWidth * 0.028,
+            color: Colors.white60,
+          ),
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: constraints.maxWidth * 0.035,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 
@@ -143,11 +303,10 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-
-  Widget _buildStatisticsGrid() {
+  Widget _buildStatisticsGrid(num day, num rating, num total, num successRate) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 16.w) / 2; // 2 columns with spacing
+        final cardWidth = (constraints.maxWidth - 16.w) / 2;
         
         return Wrap(
           spacing: 16.w,
@@ -156,37 +315,37 @@ class _DashboardTabState extends State<DashboardTab> {
             SizedBox(
               width: cardWidth,
               child: _buildStatCard(
-                icon: Icons.local_shipping,
-                value: "5",
+                icon: Icons.today,
+                value: "$day",
                 label: "Livraisons\ndu Jour",
-                color: const Color(0xFF4CAF50),
+                color: AppColors.primary,
               ),
             ),
             SizedBox(
               width: cardWidth,
               child: _buildStatCard(
-                icon: Icons.star,
-                value: "4.8",
-                label: "Évaluation\nMoyenne",
-                color: const Color(0xFFFFC107),
-              ),
-            ),
-            SizedBox(
-              width: cardWidth,
-              child: _buildStatCard(
-                icon: Icons.check_circle,
-                value: "100",
-                label: "Livraisons\nRéussies",
+                icon: Icons.inventory_2,
+                value: "$total",
+                label: "Total\nLivraisons",
                 color: const Color(0xFF2196F3),
               ),
             ),
             SizedBox(
               width: cardWidth,
               child: _buildStatCard(
-                icon: Icons.access_time,
-                value: "50h",
-                label: "Heures de\nTravail",
-                color: const Color(0xFF9C27B0),
+                icon: Icons.analytics,
+                value: "$successRate%",
+                label: "Taux de\nRéussite",
+                color: const Color(0xFF4CAF50),
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: _buildStatCard(
+                icon: Icons.stars,
+                value: rating.toStringAsFixed(1),
+                label: "Évaluation\nClient",
+                color: const Color(0xFFFFC107),
               ),
             ),
           ],
@@ -203,7 +362,6 @@ class _DashboardTabState extends State<DashboardTab> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Calculate responsive sizes based on available width
         final cardPadding = constraints.maxWidth * 0.08;
         final iconPadding = constraints.maxWidth * 0.06;
         final iconSize = constraints.maxWidth * 0.15;
@@ -262,7 +420,6 @@ class _DashboardTabState extends State<DashboardTab> {
       },
     );
   }
-
 
   Widget _buildTransactionHistoryCard(BuildContext context) {
     return InkWell(
@@ -329,7 +486,7 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildDetailedStats() {
+  Widget _buildDetailedStats(num total, num successRate) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(24.w),
@@ -355,18 +512,16 @@ class _DashboardTabState extends State<DashboardTab> {
             ],
           ),
           SizedBox(height: 20.h),
-          _buildProgressStat("Livraisons Réussies", 100, 120, const Color(0xFF4CAF50)),
+          _buildProgressStat("Livraisons Réussies", total.toInt(), (total * 1.2).toInt() + 1, const Color(0xFF4CAF50)),
           SizedBox(height: 16.h),
-          _buildProgressStat("Retours", 2, 120, const Color(0xFFFF5252)),
-          SizedBox(height: 16.h),
-          _buildProgressStat("Taux de Réussite", 98, 100, const Color(0xFF2196F3)),
+          _buildProgressStat("Taux de Réussite", successRate.toInt(), 100, const Color(0xFF2196F3)),
         ],
       ),
     );
   }
 
   Widget _buildProgressStat(String label, int value, int max, Color color) {
-    final percentage = (value / max * 100).clamp(0, 100);
+    final percentage = max > 0 ? (value / max * 100).clamp(0, 100) : 0.0;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

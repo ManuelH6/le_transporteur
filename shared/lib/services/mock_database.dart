@@ -22,6 +22,8 @@ class MockDatabase {
     _commandes.addAll([
       Commande(
         id: 'CMD-001',
+        serviceType: 'livraison',
+        status: 'en_attente',
         type: 'livraison',
         description: 'Sac de riz 25 kg',
         pickup: const Lieu(adresse: 'Marché Dantokpa, Cotonou', lat: 6.3654, lng: 2.4183),
@@ -36,6 +38,8 @@ class MockDatabase {
       ),
       Commande(
         id: 'CMD-002',
+        serviceType: 'achat',
+        status: 'Disponible',
         type: 'achat',
         description: 'Téléphone Samsung Galaxy A15',
         pickup: const Lieu(adresse: 'Jonquet, Cotonou', lat: 6.3600, lng: 2.4200),
@@ -50,6 +54,8 @@ class MockDatabase {
       ),
       Commande(
         id: 'CMD-003',
+        serviceType: 'livraison',
+        status: 'Disponible',
         type: 'livraison',
         description: 'Colis documentaire urgent - Contrat commercial',
         pickup: const Lieu(adresse: 'Bureau SGBC, Cotonou', lat: 6.3600, lng: 2.4200),
@@ -64,6 +70,8 @@ class MockDatabase {
       ),
       Commande(
         id: 'CMD-004',
+        serviceType: 'livraison',
+        status: 'Disponible',
         type: 'livraison',
         description: '10 kg de fruits de mer (Poissons et crevettes)',
         pickup: const Lieu(adresse: 'Port de Cotonou', lat: 6.3654, lng: 2.4183),
@@ -77,6 +85,8 @@ class MockDatabase {
       ),
       Commande(
         id: 'CMD-005',
+        serviceType: 'achat',
+        status: 'Disponible',
         type: 'achat',
         description: 'Médicaments Pharmacie (Doliprane, Ibuprofen)',
         pickup: const Lieu(adresse: 'Pharmacie du Stade, Cotonou', lat: 6.3600, lng: 2.4200),

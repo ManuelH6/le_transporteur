@@ -99,7 +99,7 @@ class _PrisePhotoPageState extends State<PrisePhotoPage> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             children: [
@@ -124,7 +124,7 @@ class _PrisePhotoPageState extends State<PrisePhotoPage> {
                 ),
               ),
               
-              const Spacer(), 
+              SizedBox(height: 40.h),
               
               Text(
                 "Votre photo de profil aide les clients à vous reconnaître\n Elle ne peut plus être modifiée une fois envoyée",

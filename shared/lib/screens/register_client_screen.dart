@@ -5,6 +5,7 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_button.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
+import 'package:shared_le_transporteur/core/widgets/legal_notice_widget.dart';
 
 class RegisterClientScreen extends StatelessWidget {
   const RegisterClientScreen({super.key});
@@ -73,6 +74,7 @@ class RegisterClientScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const LegalNoticeWidget(),
                     ],
                   ),
                 ),

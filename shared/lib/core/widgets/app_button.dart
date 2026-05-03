@@ -10,6 +10,7 @@ class AppButton extends StatelessWidget {
   final bool isPrimary;
   final Color? backgroundColor;
   final Color? textColor;
+  final bool isLoading;
 
   const AppButton({
     super.key,
@@ -18,6 +19,7 @@ class AppButton extends StatelessWidget {
     this.isPrimary = true,
     this.backgroundColor,
     this.textColor,
+    this.isLoading = false,
   });
 
   @override
@@ -52,12 +54,21 @@ class AppButton extends StatelessWidget {
             width: double.infinity,
             height: 56.h,
             alignment: Alignment.center,
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: txtColor,
+            child: isLoading
+                ? SizedBox(
+                    height: 24.h,
+                    width: 24.h,
+                    child: CircularProgressIndicator(
+                      color: txtColor,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    text,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: txtColor,
+                        ),
                   ),
-            ),
           ),
         ),
       ),

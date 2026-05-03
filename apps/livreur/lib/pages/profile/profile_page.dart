@@ -2,12 +2,71 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
+import 'package:shared_le_transporteur/api/v1/user_api.dart';
+import 'package:shared_le_transporteur/api/v1/livreur_api.dart';
+import 'package:shared_le_transporteur/models/user.dart';
+import 'package:shared_le_transporteur/models/livreur_profile.dart';
+import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart';
+import 'package:livreur_le_transporteur/models/registration_data.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  User? _user;
+  LivreurProfile? _livreurProfile;
+  RegistrationData? _localData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final userApi = UserApi();
+      final livreurApi = LivreurApi();
+      final box = Hive.box('livreur_registration');
+      
+      final results = await Future.wait([
+        userApi.getMe(),
+        livreurApi.getMyProfile(),
+      ]);
+
+      final savedData = box.get('current');
+      
+      if (mounted) {
+        setState(() {
+          _user = results[0] as User;
+          _livreurProfile = results[1] as LivreurProfile;
+          if (savedData != null) {
+            _localData = RegistrationData.fromJson(Map<String, dynamic>.from(savedData));
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final isApproved = _livreurProfile?.verificationStatus?.toLowerCase() == 'approved';
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0EB),
       appBar: AppBar(
@@ -29,16 +88,16 @@ class ProfilePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.edit, color: AppColors.primary, size: 24.sp),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "Modification du profil - À implémenter",
-                    style: GoogleFonts.poppins(),
-                  ),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
+            onPressed: () async {
+              if (_user != null) {
+                final updated = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => EditProfileScreen(user: _user!)),
+                );
+                if (updated == true) {
+                  _loadData();
+                }
+              }
             },
           ),
         ],
@@ -47,23 +106,15 @@ class ProfilePage extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         child: Column(
           children: [
-            // Profile Header
-            _buildProfileHeader(),
+            _buildProfileHeader(_livreurProfile?.verificationStatus),
             SizedBox(height: 24.h),
-            
-            // Personal Information
             _buildPersonalInfoSection(),
             SizedBox(height: 16.h),
-            
-            // Vehicle Information
             _buildVehicleInfoSection(),
             SizedBox(height: 16.h),
-            
-            // Documents
-            _buildDocumentsSection(),
+            _buildIdentitySection(),
+
             SizedBox(height: 16.h),
-            
-            // Statistics
             _buildStatisticsSection(),
             SizedBox(height: 40.h),
           ],
@@ -72,7 +123,25 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(String? status) {
+    Color statusColor = Colors.grey;
+    IconData statusIcon = Icons.help_outline;
+    String statusText = "Statut inconnu";
+
+    if (status?.toLowerCase() == 'approved') {
+      statusColor = const Color(0xFF4CAF50);
+      statusIcon = Icons.check_circle;
+      statusText = "Compte Vérifié";
+    } else if (status?.toLowerCase() == 'pending') {
+      statusColor = Colors.orange;
+      statusIcon = Icons.hourglass_empty;
+      statusText = "En attente";
+    } else if (status?.toLowerCase() == 'rejected') {
+      statusColor = Colors.red;
+      statusIcon = Icons.cancel;
+      statusText = "Refusé";
+    }
+
     return Container(
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
@@ -109,7 +178,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    "S",
+                    _user?.name.isNotEmpty == true ? _user!.name[0].toUpperCase() : "?",
                     style: GoogleFonts.poppins(
                       fontSize: 40.sp,
                       fontWeight: FontWeight.bold,
@@ -123,66 +192,46 @@ class ProfilePage extends StatelessWidget {
                 right: 0,
                 child: Container(
                   padding: EdgeInsets.all(8.w),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF4CAF50),
+                  decoration: BoxDecoration(
+                    color: statusColor,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.verified, color: Colors.white, size: 20.sp),
+                  child: Icon(
+                    status == 'approved' ? Icons.verified : statusIcon,
+                    color: Colors.white,
+                    size: 20.sp,
+                  ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 16.h),
           Text(
-            "Sam Dupont",
+            _user?.name ?? "Livreur",
             style: GoogleFonts.poppins(
               fontSize: 22.sp,
               fontWeight: FontWeight.bold,
               color: AppColors.text,
             ),
           ),
-          SizedBox(height: 8.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.star, color: const Color(0xFFFFC107), size: 20.sp),
-              SizedBox(width: 6.w),
-              Text(
-                "4.8",
-                style: GoogleFonts.poppins(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
-                ),
-              ),
-              SizedBox(width: 4.w),
-              Text(
-                "(120 avis)",
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
           SizedBox(height: 12.h),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20.r),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: const Color(0xFF4CAF50), size: 16.sp),
+                Icon(statusIcon, color: statusColor, size: 16.sp),
                 SizedBox(width: 6.w),
                 Text(
-                  "Compte Vérifié",
+                  statusText,
                   style: GoogleFonts.poppins(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4CAF50),
+                    color: statusColor,
                   ),
                 ),
               ],
@@ -225,15 +274,13 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _buildInfoRow(Icons.badge, "Nom complet", "Sam Dupont"),
+          _buildInfoRow(Icons.badge, "Nom complet", _user?.name ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.email, "Email", "sam.dupont@example.com"),
+          _buildInfoRow(Icons.email, "Email", _user?.email ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.phone, "Téléphone", "+237 6XX XXX XXX"),
+          _buildInfoRow(Icons.phone, "Téléphone", _user?.phoneNumber ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.location_on, "Zone", "Douala"),
-          _buildDivider(),
-          _buildInfoRow(Icons.calendar_today, "Membre depuis", "Janvier 2026"),
+          _buildInfoRow(Icons.location_on, "Zone", _livreurProfile?.ifuNumber ?? "Non renseigné"),
         ],
       ),
     );
@@ -271,23 +318,23 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _buildInfoRow(Icons.category, "Type", "Moto"),
+          _buildInfoRow(Icons.category, "Type", _livreurProfile?.motoPlateNumber != null ? "Moto" : "Aucun"),
           _buildDivider(),
-          _buildInfoRow(Icons.business, "Marque", "Yamaha"),
+          _buildInfoRow(Icons.business, "Marque", _livreurProfile?.motoBrand ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.motorcycle, "Modèle", "XTZ 125"),
+          _buildInfoRow(Icons.motorcycle, "Modèle", _livreurProfile?.motoModel ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.pin, "Plaque", "LT-1234-AB"),
+          _buildInfoRow(Icons.pin, "Plaque", _livreurProfile?.motoPlateNumber ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.numbers, "Châssis", "ABC123XYZ456"),
+          _buildInfoRow(Icons.numbers, "Châssis", _livreurProfile?.motoChassisNumber ?? ""),
           _buildDivider(),
-          _buildInfoRow(Icons.palette, "Couleur", "Noir"),
+          _buildInfoRow(Icons.palette, "Couleur", _livreurProfile?.motoCouleur ?? _localData?.vehiculeCouleur ?? "Non renseigné"),
         ],
       ),
     );
   }
 
-  Widget _buildDocumentsSection() {
+  Widget _buildIdentitySection() {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
@@ -306,10 +353,10 @@ class ProfilePage extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.description, color: AppColors.primary, size: 24.sp),
+              Icon(Icons.badge, color: AppColors.primary, size: 24.sp),
               SizedBox(width: 12.w),
               Text(
-                "Documents",
+                "Identité",
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
@@ -319,37 +366,18 @@ class ProfilePage extends StatelessWidget {
             ],
           ),
           SizedBox(height: 16.h),
-          _buildDocumentRow("Pièce d'identité", true),
-          SizedBox(height: 12.h),
-          _buildDocumentRow("Carte grise", true),
-          SizedBox(height: 12.h),
-          _buildDocumentRow("Assurance", true),
-          SizedBox(height: 16.h),
-          Container(
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFC107).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today, color: const Color(0xFFFFC107), size: 18.sp),
-                SizedBox(width: 12.w),
-                Text(
-                  "Assurance expire le: 31/12/2026",
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFFF57C00),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildInfoRow(Icons.assignment_ind, "Type de pièce", _livreurProfile?.idType ?? _localData?.pieceIdentiteType ?? "Non renseigné"),
+
+          _buildDivider(),
+          _buildInfoRow(Icons.numbers, "Numéro de pièce", _livreurProfile?.idNumber ?? _localData?.pieceIdentiteNumero ?? "Non renseigné"),
+
+          _buildDivider(),
+          _buildInfoRow(Icons.directions_car, "Numéro Carte Grise", _livreurProfile?.motoCarteGriseNumber ?? _localData?.numeroCarteGrise ?? "Non renseigné"),
         ],
       ),
     );
   }
+
 
   Widget _buildStatisticsSection() {
     return Container(
@@ -383,10 +411,10 @@ class ProfilePage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildStatItem("100", "Livraisons", Icons.local_shipping),
+                child: _buildStatItem("0", "Livraisons", Icons.local_shipping),
               ),
               Expanded(
-                child: _buildStatItem("98%", "Taux Réussite", Icons.check_circle),
+                child: _buildStatItem("0%", "Taux Réussite", Icons.check_circle),
               ),
             ],
           ),
@@ -394,10 +422,10 @@ class ProfilePage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildStatItem("150K", "Revenus", Icons.account_balance_wallet),
+                child: _buildStatItem("0 FCFA", "Revenus", Icons.account_balance_wallet),
               ),
               Expanded(
-                child: _buildStatItem("50h", "Heures", Icons.access_time),
+                child: _buildStatItem("0h", "Heures", Icons.access_time),
               ),
             ],
           ),

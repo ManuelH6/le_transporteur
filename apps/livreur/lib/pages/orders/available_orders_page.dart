@@ -59,19 +59,6 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          "Courses disponibles",
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -125,7 +112,7 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => OrderDetailsPage(commande: commande),
+              builder: (context) => OrderDetailsPage(commande: commande, isAvailableMode: true),
             ),
           ).then((_) => _loadCommandes());
         },

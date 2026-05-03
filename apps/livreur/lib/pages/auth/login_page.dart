@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:livreur_le_transporteur/pages/home/home_page.dart';
 import 'package:livreur_le_transporteur/pages/auth/register_page.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
+import 'package:shared_le_transporteur/screens/auth/forgot_password_screen.dart';
 
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/analyse_encours_page.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
+import 'package:shared_le_transporteur/api/v1/livreur_api.dart';
+import 'package:shared_le_transporteur/models/livreur_profile.dart';
+
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -48,27 +54,41 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           setState(() => _isLoading = false);
           final user = response.user;
-          
           if (user.role != 'livreur') {
-             throw Exception("Ce compte n'est pas un compte livreur.");
+            await authApi.logout(null);
+            throw "Ce compte est un compte Client. Veuillez utiliser l'application Le Transporteur Client.";
           }
 
-          if (user.livreurRequestStatus == 'approved') {
+          LivreurProfile? profile;
+          try {
+            profile = await LivreurApi().getMyProfile();
+          } catch (e) {
+            // Profile might not exist yet (404)
+          }
+
+          final status = (profile?.verificationStatus ?? user.livreurRequestStatus)?.toLowerCase();
+          
+          // Cache status locally
+          final box = Hive.box('livreur_registration');
+          await box.put('verification_status', status);
+
+          if (status == 'approved') {
             Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => const HomePage()),
               (route) => false,
             );
-          } else if (user.livreurRequestStatus == 'pending') {
-            Navigator.push(
+          } else if (status == 'pending' || status == 'rejected') {
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(builder: (context) => AnalyseEncoursPage(
-                registrationData: RegistrationData(), // Add empty data as placeholder or fetch if needed
+                registrationData: RegistrationData(),
               )),
+              (route) => false,
             );
           } else {
-            // Case 'none' or 'rejected'
-            Navigator.push(
+            // Case 'none'
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => ZoneCouverturePage(
@@ -79,13 +99,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              (route) => false,
             );
           }
+
         }
+
       } catch (e) {
         if (mounted) {
           setState(() => _isLoading = false);
-          NotificationService().showError(e);
+          NotificationService().showError(e, emailForResend: _emailController.text);
         }
       }
     }
@@ -219,7 +242,14 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                             TextButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ForgotPasswordScreen(),
+                                  ),
+                                );
+                              },
                               child: Text(
                                 "Mot de passe oublié ?",
                                 style: GoogleFonts.poppins(

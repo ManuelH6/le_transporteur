@@ -8,9 +8,9 @@ import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 import 'package:client_le_transporteur/pages/auth/register_page.dart';
 import 'package:client_le_transporteur/pages/home/client_home_page.dart';
-import 'package:intl_phone_number_input/intl_phone_number_input.dart';
-import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
-
+import 'package:shared_le_transporteur/api/v1/auth_api.dart';
+import 'package:shared_le_transporteur/screens/auth/forgot_password_screen.dart';
+import 'package:shared_le_transporteur/services/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,41 +20,39 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  String _selectedIsoCode = 'BJ';
-  PhoneNumber number = PhoneNumber(isoCode: 'BJ');
 
-  void _login() {
-    if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => UnavailableCountryScreen(countryCode: _selectedIsoCode),
-        ),
-      );
-      return;
-    }
-
+  void _login() async {
     setState(() => _isLoading = true);
     
-    // Simulate API Call
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final authApi = AuthApi();
+      final response = await authApi.login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
       if (mounted) {
+        if (response.user.role != 'client') {
+          await authApi.logout(null);
+          throw "Ce compte est un compte Livreur. Veuillez utiliser l'application Le Transporteur Livreur.";
+        }
+
         setState(() => _isLoading = false);
-        // Ensure phone number is valid before navigating logic typically
-        // Navigate to Home directly for demo or OTP if needed
-        // Requirement said Login -> OTP -> Home? Usually OTP is for registration or 2FA.
-        // Let's assume standard login for now, or OTP if new device.
-        
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const ClientHomePage()),
           (route) => false,
         );
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        NotificationService().showError(e, emailForResend: _emailController.text);
+      }
+    }
   }
 
   @override
@@ -128,38 +126,11 @@ class _LoginPageState extends State<LoginPage> {
                   SizedBox(height: 40.h),
 
                   // Form
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: InternationalPhoneNumberInput(
-                      onInputChanged: (PhoneNumber number) {
-                        setState(() {
-                          _selectedIsoCode = number.isoCode ?? 'BJ';
-                        });
-                      },
-                      countries: const ['BJ', 'TG', 'CG', 'CI', 'NG', 'GH'],
-                      selectorConfig: const SelectorConfig(
-                        selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-                        useEmoji: true,
-                      ),
-                      ignoreBlank: false,
-                      autoValidateMode: AutovalidateMode.disabled,
-                      selectorTextStyle: TextStyle(color: Colors.black, fontSize: 14.sp),
-                      initialValue: number,
-                      textFieldController: _phoneController,
-                      formatInput: false,
-                      textStyle: TextStyle(fontSize: 14.sp, color: Colors.black),
-                      keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
-                      inputDecoration: InputDecoration(
-                        hintText: 'Numéro de téléphone',
-                        hintStyle: TextStyle(fontSize: 14.sp),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.only(bottom: 12.h),
-                      ),
-                    ),
+                  AppTextField(
+                    controller: _emailController,
+                    hintText: "Adresse email",
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
                   ),
                   SizedBox(height: 16.h),
                   AppTextField(
@@ -174,7 +145,14 @@ class _LoginPageState extends State<LoginPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
                       child: Text(
                         "Mot de passe oublié ?",
                         style: GoogleFonts.poppins(

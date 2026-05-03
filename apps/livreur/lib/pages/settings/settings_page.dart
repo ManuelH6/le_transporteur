@@ -3,7 +3,18 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
-import 'package:livreur_le_transporteur/pages/splash_screen.dart';
+import 'package:shared_le_transporteur/api/v1/user_api.dart';
+import 'package:shared_le_transporteur/models/user.dart';
+import 'package:livreur_le_transporteur/pages/intro/onboarding_page.dart';
+import 'package:shared_le_transporteur/screens/settings/change_password_screen.dart';
+import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart';
+import 'package:shared_le_transporteur/screens/settings/notifications_settings_screen.dart';
+import 'package:shared_le_transporteur/screens/settings/pdf_viewer_screen.dart';
+import 'package:shared_le_transporteur/screens/settings/user_manual_screen.dart';
+import 'package:shared_le_transporteur/screens/settings/legal_documents_screen.dart';
+import 'package:shared_le_transporteur/services/report_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,60 +24,63 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notifNewDeliveries = true;
-  bool _notifMessages = true;
-  bool _notifAppUpdates = true;
-  bool _notifPromotions = false;
-  bool _twoFactorAuth = false;
-  bool _pinLock = false;
-  bool _locationData = true;
+  User? _user;
+  bool _locationData = false;
+  Timer? _locationTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUser();
+    _checkLocationStatus();
+    // Refresh location status every 5 seconds to sync with system
+    _locationTimer = Timer.periodic(const Duration(seconds: 5), (_) => _checkLocationStatus());
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _fetchUser() async {
+    try {
+      final user = await UserApi().getMe();
+      if (mounted) setState(() => _user = user);
+    } catch (e) {}
+  }
+
+  Future<void> _checkLocationStatus() async {
+    final enabled = await Geolocator.isLocationServiceEnabled();
+    if (mounted && _locationData != enabled) {
+      setState(() => _locationData = enabled);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF0EB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          "Paramètres",
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         child: Column(
           children: [
-            // Account Section
             _buildAccountSection(),
             SizedBox(height: 16.h),
-            
-            // Notifications Section
+            _buildReportSection(),
+            SizedBox(height: 16.h),
             _buildNotificationsSection(),
             SizedBox(height: 16.h),
-            
-            // Language & Region Section
-            _buildLanguageRegionSection(),
-            SizedBox(height: 16.h),
-            
-            // Security Section
+            // Language & Region Commented out
+            // _buildLanguageRegionSection(),
+            // SizedBox(height: 16.h),
             _buildSecuritySection(),
             SizedBox(height: 16.h),
-            
-            // Payments Section
-            _buildPaymentsSection(),
-            SizedBox(height: 16.h),
-            
-            // Support & About Section
+            // Payments Commented out
+            // _buildPaymentsSection(),
+            // SizedBox(height: 16.h),
             _buildSupportSection(),
             SizedBox(height: 24.h),
-            
-            // Critical Actions
             _buildCriticalActions(),
             SizedBox(height: 40.h),
           ],
@@ -83,24 +97,36 @@ class _SettingsPageState extends State<SettingsPage> {
         _buildNavigationTile(
           icon: Icons.edit,
           title: "Modifier le profil",
-          onTap: () => _showComingSoon("Modification du profil"),
+          onTap: () async {
+            if (_user != null) {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditProfileScreen(user: _user!)),
+              );
+              if (updated == true) _fetchUser();
+            }
+          },
         ),
         _buildNavigationTile(
           icon: Icons.lock,
           title: "Changer le mot de passe",
-          onTap: () => _showComingSoon("Changement de mot de passe"),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordScreen())),
+          showDivider: false,
         ),
+      ],
+    );
+  }
+
+  Widget _buildReportSection() {
+    return _buildSection(
+      title: "Statistiques & Rapports",
+      icon: Icons.bar_chart_rounded,
+      children: [
         _buildNavigationTile(
-          icon: Icons.phone,
-          title: "Numéro de téléphone",
-          subtitle: "+237 6XX XXX XXX",
-          onTap: () => _showComingSoon("Modification du téléphone"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.email,
-          title: "Adresse email",
-          subtitle: "sam@example.com",
-          onTap: () => _showComingSoon("Modification de l'email"),
+          icon: Icons.picture_as_pdf_rounded,
+          title: "Télécharger mon rapport",
+          subtitle: "Bilan complet d'activité (PDF)",
+          onTap: () => ReportService().generateAndShareReport(context, isCourier: true),
           showDivider: false,
         ),
       ],
@@ -112,57 +138,10 @@ class _SettingsPageState extends State<SettingsPage> {
       title: "Notifications",
       icon: Icons.notifications,
       children: [
-        _buildSwitchTile(
-          icon: Icons.local_shipping,
-          title: "Nouvelles livraisons",
-          value: _notifNewDeliveries,
-          onChanged: (value) => setState(() => _notifNewDeliveries = value),
-        ),
-        _buildSwitchTile(
-          icon: Icons.message,
-          title: "Messages clients",
-          value: _notifMessages,
-          onChanged: (value) => setState(() => _notifMessages = value),
-        ),
-        _buildSwitchTile(
-          icon: Icons.system_update,
-          title: "Mises à jour app",
-          value: _notifAppUpdates,
-          onChanged: (value) => setState(() => _notifAppUpdates = value),
-        ),
-        _buildSwitchTile(
-          icon: Icons.local_offer,
-          title: "Promotions",
-          value: _notifPromotions,
-          onChanged: (value) => setState(() => _notifPromotions = value),
-          showDivider: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLanguageRegionSection() {
-    return _buildSection(
-      title: "Langue & Région",
-      icon: Icons.language,
-      children: [
         _buildNavigationTile(
-          icon: Icons.translate,
-          title: "Langue",
-          subtitle: "Français",
-          onTap: () => _showComingSoon("Changement de langue"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.attach_money,
-          title: "Devise",
-          subtitle: "FCFA",
-          onTap: () => _showComingSoon("Changement de devise"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.access_time,
-          title: "Fuseau horaire",
-          subtitle: "WAT (GMT+1)",
-          onTap: () => _showComingSoon("Changement de fuseau horaire"),
+          icon: Icons.notifications_active_outlined,
+          title: "Gérer les notifications",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsSettingsScreen())),
           showDivider: false,
         ),
       ],
@@ -174,57 +153,28 @@ class _SettingsPageState extends State<SettingsPage> {
       title: "Sécurité & Confidentialité",
       icon: Icons.security,
       children: [
-        _buildSwitchTile(
-          icon: Icons.verified_user,
-          title: "Authentification 2FA",
-          subtitle: "Sécurité renforcée",
-          value: _twoFactorAuth,
-          onChanged: (value) => setState(() => _twoFactorAuth = value),
-        ),
-        _buildSwitchTile(
-          icon: Icons.pin,
-          title: "Verrouillage par code",
-          subtitle: "Code PIN à l'ouverture",
-          value: _pinLock,
-          onChanged: (value) => setState(() => _pinLock = value),
-        ),
+        // 2FA and PIN lock commented out
         _buildSwitchTile(
           icon: Icons.location_on,
           title: "Données de localisation",
-          subtitle: "Requis pour les livraisons",
+          subtitle: "Synchronisé avec le système",
           value: _locationData,
-          onChanged: (value) => setState(() => _locationData = value),
+          onChanged: (value) async {
+            if (!value) {
+               // User wants to disable, but it's system-linked
+               ScaffoldMessenger.of(context).showSnackBar(
+                 const SnackBar(content: Text("Veuillez désactiver la localisation dans les paramètres de votre smartphone."))
+               );
+            } else {
+               await Geolocator.openLocationSettings();
+            }
+          },
         ),
         _buildNavigationTile(
           icon: Icons.history,
           title: "Historique d'activité",
-          onTap: () => _showComingSoon("Historique d'activité"),
-          showDivider: false,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentsSection() {
-    return _buildSection(
-      title: "Paiements",
-      icon: Icons.payment,
-      children: [
-        _buildNavigationTile(
-          icon: Icons.credit_card,
-          title: "Méthode de paiement",
-          subtitle: "Mobile Money",
-          onTap: () => _showComingSoon("Méthode de paiement"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.receipt_long,
-          title: "Historique des paiements",
-          onTap: () => _showComingSoon("Historique des paiements"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.description,
-          title: "Relevés fiscaux",
-          onTap: () => _showComingSoon("Relevés fiscaux"),
+          subtitle: "Bientôt disponible",
+          onTap: null,
           showDivider: false,
         ),
       ],
@@ -238,28 +188,14 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         _buildNavigationTile(
           icon: Icons.help,
-          title: "Centre d'aide",
-          onTap: () => _showComingSoon("Centre d'aide"),
+          title: "Manuel d'utilisation",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UserManualScreen())),
         ),
         _buildNavigationTile(
-          icon: Icons.support_agent,
-          title: "Contacter le support",
-          onTap: () => _showComingSoon("Support"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.article,
-          title: "Conditions d'utilisation",
-          onTap: () => _showComingSoon("Conditions d'utilisation"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.privacy_tip,
-          title: "Politique de confidentialité",
-          onTap: () => _showComingSoon("Politique de confidentialité"),
-        ),
-        _buildNavigationTile(
-          icon: Icons.privacy_tip,
-          title: "Mentions Légales",
-          onTap: () => _showComingSoon("Mentions Légales"),
+          icon: Icons.gavel,
+          title: "Documents légaux",
+          subtitle: "CGU, Confidentialité, Mentions légales",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LegalDocumentsScreen())),
         ),
         _buildNavigationTile(
           icon: Icons.info_outline,
@@ -282,16 +218,6 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () => _showConfirmDialog(
             "Déconnexion",
             "Êtes-vous sûr de vouloir vous déconnecter ?",
-          ),
-        ),
-        SizedBox(height: 12.h),
-        _buildActionButton(
-          icon: Icons.delete_forever,
-          title: "Supprimer le compte",
-          color: const Color(0xFFFF5252),
-          onTap: () => _showConfirmDialog(
-            "Supprimer le compte",
-            "Cette action est irréversible. Êtes-vous sûr ?",
           ),
         ),
       ],
@@ -348,44 +274,48 @@ class _SettingsPageState extends State<SettingsPage> {
     VoidCallback? onTap,
     bool showDivider = true,
   }) {
+    final bool isDisabled = onTap == null && subtitle == "Bientôt disponible";
     return Column(
       children: [
         InkWell(
           onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-            child: Row(
-              children: [
-                Icon(icon, color: Colors.grey[600], size: 22.sp),
-                SizedBox(width: 16.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.text,
-                        ),
-                      ),
-                      if (subtitle != null) ...[
-                        SizedBox(height: 2.h),
+          child: Opacity(
+            opacity: isDisabled ? 0.5 : 1.0,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              child: Row(
+                children: [
+                  Icon(icon, color: isDisabled ? Colors.grey : Colors.grey[600], size: 22.sp),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          subtitle,
+                          title,
                           style: GoogleFonts.poppins(
-                            fontSize: 12.sp,
-                            color: Colors.grey[600],
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.text,
                           ),
                         ),
+                        if (subtitle != null) ...[
+                          SizedBox(height: 2.h),
+                          Text(
+                            subtitle,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-                if (onTap != null)
-                  Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16.sp),
-              ],
+                  if (onTap != null)
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16.sp),
+                ],
+              ),
             ),
           ),
         ),
@@ -492,38 +422,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          "$feature - À implémenter",
-          style: GoogleFonts.poppins(),
-        ),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-  }
-
   void _showConfirmDialog(String title, String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          message,
-          style: GoogleFonts.poppins(),
-        ),
+        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Text(message, style: GoogleFonts.poppins()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              "Annuler",
-              style: GoogleFonts.poppins(color: Colors.grey[600]),
-            ),
+            child: Text("Annuler", style: GoogleFonts.poppins(color: Colors.grey[600])),
           ),
           TextButton(
             onPressed: () async {
@@ -533,22 +442,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const SplashScreen()),
+                    MaterialPageRoute(builder: (context) => const OnboardingPage()),
                     (route) => false,
                   );
                 }
-              } else {
-                _showComingSoon(title);
               }
             },
             child: Text(
               "Confirmer",
-              style: GoogleFonts.poppins(
-                color: title.contains("Supprimer") 
-                    ? const Color(0xFFFF5252) 
-                    : AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: GoogleFonts.poppins(color: AppColors.primary, fontWeight: FontWeight.w600),
             ),
           ),
         ],

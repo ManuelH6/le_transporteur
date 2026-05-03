@@ -30,33 +30,6 @@ class _MesLivraisonsPageState extends State<MesLivraisonsPage> with SingleTicker
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          "Mes livraisons",
-           style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text,
-          ),
-        ),
-        centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: Colors.grey,
-          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.sp),
-          indicatorColor: AppColors.primary,
-          isScrollable: true,
-          tabs: const [
-            Tab(text: "En cours"),
-            Tab(text: "En attente"),
-            Tab(text: "Terminées"),
-            Tab(text: "Annulées"),
-          ],
-        ),
-      ),
       body: TabBarView(
         controller: _tabController,
         children: [

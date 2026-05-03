@@ -4,6 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
+import 'package:shared_le_transporteur/core/widgets/notification_bell.dart';
+import 'package:shared_le_transporteur/screens/notifications/notification_screen.dart';
 import 'package:client_le_transporteur/pages/home/new_order_form_page.dart' as client_le_transporteur;
 
 class ClientDashboardPage extends StatefulWidget {
@@ -195,12 +197,17 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu, color: AppColors.text, size: 28.sp),
-          onPressed: () {},
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
         ),
-        title: AppImage(
-          assetPath: 'assets/images/logo_le_transporteur_orange.png',
-          height: 30.h,
-          fit: BoxFit.contain,
+        title: Text(
+          "Accueil",
+          style: GoogleFonts.poppins(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColors.text,
+          ),
         ),
         centerTitle: true,
         actions: [
@@ -208,34 +215,7 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
             icon: Icon(Icons.search, color: AppColors.text, size: 24.sp),
             onPressed: () {},
           ),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: Icon(Icons.notifications_none, color: AppColors.text, size: 24.sp),
-                onPressed: () {},
-              ),
-              Positioned(
-                top: 10.h,
-                right: 10.w,
-                child: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '5',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 8.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          const NotificationBell(),
           SizedBox(width: 8.w),
         ],
       ),

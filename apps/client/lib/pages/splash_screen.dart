@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/constants/assets.dart';
 
 import 'package:client_le_transporteur/pages/intro/onboarding_page.dart';
+import 'package:client_le_transporteur/pages/home/client_home_page.dart';
+import 'package:shared_le_transporteur/api/v1/api_client.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,12 +30,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
-        Navigator.pushReplacement(
-          context, 
-          MaterialPageRoute(builder: (context) => const OnboardingPage())
-        );
+        final apiClient = ApiClient();
+        final token = await apiClient.token;
+        final user = await apiClient.user;
+
+        if (token != null && user != null && user.role == 'client') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ClientHomePage()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context, 
+            MaterialPageRoute(builder: (context) => const OnboardingPage())
+          );
+        }
       }
     });
   }

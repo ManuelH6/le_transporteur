@@ -11,6 +11,8 @@ import 'package:client_le_transporteur/pages/auth/login_page.dart';
 import 'package:client_le_transporteur/pages/home/client_home_page.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
+import 'package:shared_le_transporteur/api/v1/auth_api.dart';
+import 'package:shared_le_transporteur/services/notification_service.dart';
 
 
 class RegisterPage extends StatefulWidget {
@@ -22,14 +24,22 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController(); // New
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   String _selectedIsoCode = 'BJ';
+  String _selectedGender = 'other'; // default
   PhoneNumber number = PhoneNumber(isoCode: 'BJ');
 
-  void _register() {
+  final List<Map<String, String>> _genders = [
+    {'display': 'Homme', 'value': 'man'},
+    {'display': 'Femme', 'value': 'women'},
+    {'display': 'Autre', 'value': 'other'},
+  ];
+
+  void _register() async { // Added async
     if (['CI', 'NG', 'GH'].contains(_selectedIsoCode)) {
       Navigator.push(
         context,
@@ -40,33 +50,45 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    if (_passwordController.text != _confirmPasswordController.text) {
+      NotificationService().showError('Les mots de passe ne correspondent pas');
+      return;
+    }
+
     setState(() => _isLoading = true);
     
-    // Simulate API Call & OTP Flow
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final authApi = AuthApi();
+      await authApi.register(
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+        phoneNumber: _phoneController.text,
+        countryCode: _selectedIsoCode,
+        genderrole: _selectedGender,
+        signupIntent: 'client',
+      );
+
       if (mounted) {
         setState(() => _isLoading = false);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OtpVerificationScreen(
-              phoneNumber: _phoneController.text,
-              onVerified: (otp) {
-                 Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ClientHomePage()),
-                    (route) => false,
-                 );
-              },
-              onResend: () {
-                // Handle resend logic
-              },
-            ),
-          ),
+        NotificationService().showSuccessDialog(
+          title: "Inscription réussie",
+          message: "Veuillez consulter votre boîte mail pour valider votre compte avant de vous connecter.",
+          onConfirm: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+              (route) => false,
+            );
+          },
         );
-
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        NotificationService().showError(e);
+      }
+    }
   }
 
   @override
@@ -124,6 +146,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   AppTextField(controller: _nameController, hintText: "Nom et prénom", prefixIcon: Icons.person),
                   SizedBox(height: 12.h),
+                  AppTextField(
+                    controller: _emailController,
+                    hintText: "Adresse email",
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(height: 12.h),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
                     decoration: BoxDecoration(
@@ -154,6 +183,36 @@ class _RegisterPageState extends State<RegisterPage> {
                         hintStyle: TextStyle(fontSize: 14.sp),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.only(bottom: 12.h),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButtonFormField<String>(
+                        value: _selectedGender,
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          prefixIcon: Icon(Icons.people_outline, size: 20.sp, color: Colors.grey),
+                          labelText: 'Genre',
+                          labelStyle: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                        ),
+                        items: _genders.map((gender) {
+                          return DropdownMenuItem<String>(
+                            value: gender['value'],
+                            child: Text(gender['display']!, style: TextStyle(fontSize: 14.sp)),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _selectedGender = value);
+                          }
+                        },
                       ),
                     ),
                   ),

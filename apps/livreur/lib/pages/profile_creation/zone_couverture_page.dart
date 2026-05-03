@@ -70,7 +70,7 @@ class _ZoneCouverturePageState extends State<ZoneCouverturePage> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Column(
             children: [
@@ -85,11 +85,11 @@ class _ZoneCouverturePageState extends State<ZoneCouverturePage> {
                 ),
               ),
               SizedBox(height: 30.h),
-              Expanded(
+              SizedBox(
+                height: 200.h,
                 child: UnDraw(
                   illustration: UnDrawIllustration.investing,
                   color: AppColors.primary,
-                  height: 200.h,
                   placeholder: const Center(child: CircularProgressIndicator()),
                   errorWidget: const Icon(Icons.error_outline, color: Colors.red),
                 ),
@@ -205,7 +205,7 @@ class _ZoneCouverturePageState extends State<ZoneCouverturePage> {
                           ),
                         );
                       }
-                    : null, // Disabled if not selected or checked
+                    : null,
               ),
               SizedBox(height: 30.h),
             ],

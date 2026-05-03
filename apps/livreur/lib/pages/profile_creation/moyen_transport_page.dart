@@ -20,7 +20,7 @@ class _MoyenTransportPageState extends State<MoyenTransportPage> {
   
   final List<Map<String, dynamic>> _transports = [
     {'id': 'moto', 'label': 'Moto', 'icon': Icons.two_wheeler},
-    {'id': 'tricycle', 'label': 'Tricycle', 'icon': Icons.electric_rickshaw}, // Using electric_rickshaw as approx for tricycle
+    {'id': 'tricycle', 'label': 'Tricycle', 'icon': Icons.electric_rickshaw},
     {'id': 'fourgonnette', 'label': 'Fourgonnette', 'icon': Icons.local_shipping_outlined},
     {'id': 'camion', 'label': 'Camion', 'icon': Icons.local_shipping},
   ];
@@ -44,7 +44,7 @@ class _MoyenTransportPageState extends State<MoyenTransportPage> {
             children: [
               SizedBox(height: 10.h),
                Text(
-                "Vous souhaitez livrer à",
+                "Quel véhicule possédez-vous ?",
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 20.sp,
@@ -65,16 +65,21 @@ class _MoyenTransportPageState extends State<MoyenTransportPage> {
                   itemBuilder: (context, index) {
                     final transport = _transports[index];
                     final isSelected = _selectedTransport == transport['id'];
+                    final isAvailable = transport['id'] == 'moto';
                     
                     return GestureDetector(
-                      onTap: () {
+                      onTap: isAvailable ? () {
                         setState(() {
                           _selectedTransport = transport['id'];
                         });
+                      } : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Cette option sera bientôt disponible")),
+                        );
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: isAvailable ? Colors.white : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(16.r),
                           border: Border.all(
                             color: isSelected ? AppColors.primary : Colors.grey.shade300,
@@ -88,31 +93,81 @@ class _MoyenTransportPageState extends State<MoyenTransportPage> {
                             ),
                           ],
                         ),
-                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                             Icon(
-                               transport['icon'],
-                               size: 60.sp,
-                               color: isSelected ? AppColors.primary : Colors.grey.shade600,
+                         child: Stack(
+                           children: [
+                             Center(
+                               child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                   Icon(
+                                     transport['icon'],
+                                     size: 60.sp,
+                                     color: isSelected 
+                                      ? AppColors.primary 
+                                      : (isAvailable ? Colors.grey.shade600 : Colors.grey.shade300),
+                                   ),
+                                   SizedBox(height: 16.h),
+                                   Text(
+                                      transport['label'],
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16.sp,
+                                        fontWeight: FontWeight.w500,
+                                        color: isSelected 
+                                          ? AppColors.primary 
+                                          : (isAvailable ? AppColors.text : Colors.grey.shade400),
+                                      ),
+                                   ),
+                                ],
+                               ),
                              ),
-                             SizedBox(height: 16.h),
-                             Text(
-                                transport['label'],
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected ? AppColors.primary : AppColors.text,
-                                ),
-                             ),
-                          ],
-                        ),
+                             if (!isAvailable)
+                               Positioned(
+                                 top: 10.h,
+                                 right: 10.w,
+                                 child: Container(
+                                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                                   decoration: BoxDecoration(
+                                     color: Colors.grey.shade200,
+                                     borderRadius: BorderRadius.circular(12.r),
+                                   ),
+                                   child: Text(
+                                     "Bientôt",
+                                     style: GoogleFonts.poppins(
+                                       fontSize: 10.sp,
+                                       color: Colors.grey.shade600,
+                                       fontWeight: FontWeight.w600,
+                                     ),
+                                   ),
+                                 ),
+                               ),
+                           ],
+                         ),
                       ),
                     );
                   },
                 ),
               ),
               SizedBox(height: 20.h),
+              
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedTransport = 'none';
+                  });
+                },
+                child: Text(
+                  "Je ne possède aucun véhicule",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    color: _selectedTransport == 'none' ? AppColors.primary : Colors.grey,
+                    fontWeight: _selectedTransport == 'none' ? FontWeight.w600 : FontWeight.w400,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 16.h),
+
               AppButton(
                 text: "Continuer",
                 onPressed: _selectedTransport != null
@@ -125,7 +180,7 @@ class _MoyenTransportPageState extends State<MoyenTransportPage> {
                       ),
                     );
                   }
-                : null, // Disable if none selected
+                : null,
               ),
                SizedBox(height: 30.h),
             ],

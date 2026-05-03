@@ -11,6 +11,10 @@ import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:shared_le_transporteur/api/v1/user_api.dart';
 import 'package:shared_le_transporteur/api/v1/livreur_api.dart';
 
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
+
+
 class AnalyseEncoursPage extends StatefulWidget {
   final RegistrationData registrationData;
   const AnalyseEncoursPage({super.key, required this.registrationData});
@@ -22,20 +26,70 @@ class AnalyseEncoursPage extends StatefulWidget {
 class _AnalyseEncoursPageState extends State<AnalyseEncoursPage> {
   bool _isSubmitting = true;
   String? _error;
+  String? _status;
+  late RegistrationData _data;
+
 
   @override
   void initState() {
     super.initState();
-    _submitProfile();
+    _data = widget.registrationData;
+    _initData();
   }
+
+  Future<void> _initData() async {
+    // If data is empty (from main.dart), try to load from Hive
+    if (_data.pieceIdentiteType == null && _data.plaqueImmatriculation == null) {
+      final box = Hive.box('livreur_registration');
+      final savedData = box.get('current');
+      if (savedData != null) {
+        _data = RegistrationData.fromJson(Map<String, dynamic>.from(savedData));
+      }
+    }
+
+    if (_data.pieceIdentiteType != null || _data.plaqueImmatriculation != null) {
+      _submitProfile();
+    } else {
+      _fetchStatus();
+    }
+  }
+
+  Future<void> _fetchStatus() async {
+    setState(() => _isSubmitting = true);
+    try {
+      final profile = await LivreurApi().getMyProfile();
+      final status = profile.verificationStatus?.toLowerCase();
+      
+      final box = Hive.box('livreur_registration');
+      await box.put('verification_status', status);
+
+      if (mounted) {
+        setState(() {
+          _status = status;
+          _isSubmitting = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
 
   Future<void> _submitProfile() async {
     try {
+      // Save data to Hive immediately to ensure we keep the paths
+      final box = Hive.box('livreur_registration');
+      await box.put('current', _data.toJson());
+
       final userApi = UserApi();
       final livreurApi = LivreurApi();
       
       // 1. Get current user ID
-      // This will now work as we logged in after OTP verification
       final user = await userApi.getMe();
       final userId = user.id;
       
@@ -45,29 +99,36 @@ class _AnalyseEncoursPageState extends State<AnalyseEncoursPage> {
 
       // 2. Submit Profile
       await livreurApi.updateProfile(userId, {
-        'motoPlateNumber': widget.registrationData.plaqueImmatriculation?.trim(),
-        'motoChassisNumber': widget.registrationData.numeroChassis?.trim(),
-        'motoBrand': widget.registrationData.marqueVehicule?.trim(),
-        'motoModel': widget.registrationData.modeleVehicule?.trim(),
-        'idType': widget.registrationData.pieceIdentiteType,
-        'idNumber': widget.registrationData.pieceIdentiteNumero?.trim(), // Using the actual ID document number
+        'vehicleType': _data.vehiculeType,
+        'motoPlateNumber': _data.plaqueImmatriculation?.trim(),
+        'motoChassisNumber': _data.numeroChassis?.trim(),
+        'motoCarteGriseNumber': _data.numeroCarteGrise?.trim(),
+        'motoBrand': _data.marqueVehicule?.trim(),
+        'motoModel': _data.modeleVehicule?.trim(),
+        'idType': _data.pieceIdentiteType,
+        'idNumber': _data.pieceIdentiteNumero?.trim(),
       });
 
-      // 3. Upload Profile Photo if any
-      if (widget.registrationData.photoProfilePath != null) {
+      // Photo upload is disabled for now
+      /*
+      if (_data.photoProfilePath != null) {
         try {
-          await userApi.uploadProfilePhoto(widget.registrationData.photoProfilePath!);
+          await userApi.uploadProfilePhoto(_data.photoProfilePath!);
         } catch (e) {
           debugPrint("Erreur lors de l'upload de la photo: $e");
-          // Non-critical error, we continue
         }
       }
+      */
 
       if (mounted) {
         setState(() {
           _isSubmitting = false;
+          _status = 'pending';
         });
+        final box = Hive.box('livreur_registration');
+        await box.put('verification_status', 'pending');
       }
+
     } catch (e) {
       debugPrint("Erreur lors de la soumission du profil: $e");
       if (mounted) {
@@ -91,7 +152,7 @@ class _AnalyseEncoursPageState extends State<AnalyseEncoursPage> {
             children: [
               const Spacer(),
               if (_isSubmitting)
-                const CircularProgressIndicator()
+                const Center(child: CircularProgressIndicator())
               else if (_error != null)
                 Column(
                   children: [
@@ -100,6 +161,40 @@ class _AnalyseEncoursPageState extends State<AnalyseEncoursPage> {
                     Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
                     SizedBox(height: 16.h),
                     AppButton(text: "Réessayer", onPressed: _submitProfile),
+                  ],
+                )
+              else if (_status == 'rejected')
+                Column(
+                  children: [
+                    const Icon(Icons.cancel, color: Colors.red, size: 80),
+                    SizedBox(height: 24.h),
+                    Text(
+                      "Profil Rejeté",
+                      style: GoogleFonts.poppins(
+                        fontSize: 22.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    Text(
+                      "Malheureusement, votre dossier n'a pas été accepté. Veuillez vérifier vos informations et soumettre à nouveau votre demande.",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(fontSize: 16.sp, color: Colors.grey[700]),
+                    ),
+                    SizedBox(height: 32.h),
+                    AppButton(
+                      text: "Modifier mes informations",
+                      onPressed: () {
+                        // Go back to the beginning of registration
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => ZoneCouverturePage(registrationData: _data)),
+                          (route) => false,
+                        );
+                      },
+                    ),
+
                   ],
                 )
               else
@@ -132,6 +227,7 @@ class _AnalyseEncoursPageState extends State<AnalyseEncoursPage> {
                     ),
                   ],
                 ),
+
               const Spacer(),
               if (!_isSubmitting && _error == null)
                 AppButton(

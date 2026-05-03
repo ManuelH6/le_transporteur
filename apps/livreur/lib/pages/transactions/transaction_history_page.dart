@@ -3,6 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_le_transporteur/api/v1/api_client.dart';
+import 'package:shared_le_transporteur/api/v1/order_api.dart';
+import 'package:shared_le_transporteur/api/v1/report_api.dart';
+import 'package:shared_le_transporteur/models/commande.dart';
 
 enum TransactionType { earning, payout }
 
@@ -33,50 +38,69 @@ class TransactionHistoryPage extends StatefulWidget {
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   String _selectedFilter = 'Tout';
-  final List<String> _filters = ['Tout', 'Gains', 'Retraits'];
+  final List<String> _filters = ['Tout', 'Jour', 'Semaine', 'Mois'];
+  bool _isLoading = true;
+  String? _error;
+  Map<String, dynamic>? _summary;
+  List<TransactionModel> _transactions = [];
 
-  final List<TransactionModel> _mockTransactions = [
-    TransactionModel(
-      id: '1',
-      title: 'Livraison #8822',
-      subtitle: 'Akwa - Bonapriso',
-      amount: 2500,
-      date: DateTime.now(),
-      type: TransactionType.earning,
-    ),
-    TransactionModel(
-      id: '2',
-      title: 'Livraison #8821',
-      subtitle: 'Deido - Bonanjo',
-      amount: 1800,
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      type: TransactionType.earning,
-    ),
-    TransactionModel(
-      id: '3',
-      title: 'Virement Hebdomadaire',
-      subtitle: 'Vers Orange Money',
-      amount: -25000,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      type: TransactionType.payout,
-    ),
-    TransactionModel(
-      id: '4',
-      title: 'Livraison #8819',
-      subtitle: 'Logpom - Kotto',
-      amount: 3200,
-      date: DateTime.now().subtract(const Duration(days: 1, hours: 4)),
-      type: TransactionType.earning,
-    ),
-    TransactionModel(
-      id: '5',
-      title: 'Livraison #8818',
-      subtitle: 'Bonamoussadi - Makepe',
-      amount: 2100,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      type: TransactionType.earning,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    initializeDateFormatting('fr_FR', null);
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final user = await ApiClient().user;
+      if (user == null) throw Exception("Session expirée");
+
+      final summary = await ReportApi().getHistoryMe();
+      final orders = await OrderApi().getOrdersByCourier(user.id!);
+      
+      // Filter for completed/delivered orders
+      final completedOrders = orders.where((o) {
+        final s = o.status.toLowerCase();
+        return s == 'completed' || s == 'terminee' || s == 'terminée' || s == 'livré' || s == 'livree';
+      }).toList();
+
+      final transactions = completedOrders.map((item) {
+        final grossAmount = (item.finalPrice ?? item.propositionLivreur ?? item.propositionClient ?? 0.0).toDouble();
+        return TransactionModel(
+          id: item.id,
+          title: "Livraison #${item.id.substring(0, min(5, item.id.length)).toUpperCase()}",
+          subtitle: "Statut: ${item.statut}",
+          amount: grossAmount * 0.3, // 30% for courier
+          date: item.dateCreation,
+          type: TransactionType.earning,
+        );
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _summary = summary;
+          _transactions = transactions;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  int min(int a, int b) => a < b ? a : b;
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,20 +123,28 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            children: [
-              _buildSummaryHeader(constraints),
-              _buildFilterSection(constraints),
-              Expanded(
-                child: _buildTransactionList(constraints),
-              ),
-            ],
-          );
-        },
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text("Erreur: $_error"))
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Column(
+                      children: [
+                        _buildSummaryHeader(constraints),
+                        _buildFilterSection(constraints),
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: _fetchHistory,
+                            child: _buildTransactionList(constraints),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
     );
+
   }
 
   Widget _buildSummaryHeader(BoxConstraints constraints) {
@@ -134,7 +166,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
           SizedBox(height: constraints.maxWidth * 0.01),
           Text(
-            "45 800 FCFA",
+            "${_calculateTotalRevenue().toInt()} FCFA",
             style: GoogleFonts.poppins(
               fontSize: constraints.maxWidth * 0.08,
               fontWeight: FontWeight.bold,
@@ -148,7 +180,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               _buildSummaryItem(
                 constraints,
                 "Ce mois",
-                "125 000",
+                "${_calculateMonthlyRevenue().toInt()}",
                 Icons.arrow_upward,
                 Colors.green,
               ),
@@ -159,16 +191,35 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               ),
               _buildSummaryItem(
                 constraints,
-                "Retraits",
-                "80 000",
-                Icons.arrow_downward,
-                Colors.red,
+                "Aujourd'hui",
+                "${_calculateDailyRevenue().toInt()}",
+                Icons.trending_up,
+                AppColors.secondary,
               ),
             ],
           ),
+
         ],
       ),
     );
+  }
+
+  double _calculateTotalRevenue() {
+    return _transactions.fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  double _calculateDailyRevenue() {
+    final now = DateTime.now();
+    return _transactions.where((t) => 
+      t.date.day == now.day && t.date.month == now.month && t.date.year == now.year
+    ).fold(0.0, (sum, t) => sum + t.amount);
+  }
+
+  double _calculateMonthlyRevenue() {
+    final now = DateTime.now();
+    return _transactions.where((t) => 
+      t.date.month == now.month && t.date.year == now.year
+    ).fold(0.0, (sum, t) => sum + t.amount);
   }
 
   Widget _buildSummaryItem(
@@ -246,11 +297,20 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Widget _buildTransactionList(BoxConstraints constraints) {
-    final filteredList = _mockTransactions.where((t) {
-      if (_selectedFilter == 'Gains') return t.type == TransactionType.earning;
-      if (_selectedFilter == 'Retraits') return t.type == TransactionType.payout;
+    final now = DateTime.now();
+    final filteredList = _transactions.where((t) {
+      if (_selectedFilter == 'Jour') {
+        return t.date.day == now.day && t.date.month == now.month && t.date.year == now.year;
+      }
+      if (_selectedFilter == 'Semaine') {
+        return t.date.isAfter(now.subtract(const Duration(days: 7)));
+      }
+      if (_selectedFilter == 'Mois') {
+        return t.date.month == now.month && t.date.year == now.year;
+      }
       return true;
     }).toList();
+
 
     if (filteredList.isEmpty) {
       return Center(
@@ -338,8 +398,9 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                 ),
               ),
               Text(
-                DateFormat('dd MMM, HH:mm').format(transaction.date),
+                DateFormat('dd MMM, HH:mm', 'fr_FR').format(transaction.date),
                 style: GoogleFonts.poppins(
+
                   fontSize: constraints.maxWidth * 0.028,
                   color: Colors.grey[500],
                 ),
