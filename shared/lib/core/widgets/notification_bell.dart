@@ -17,7 +17,7 @@ class _NotificationBellState extends State<NotificationBell> {
   final NotificationApi _api = NotificationApi();
   Timer? _timer;
   int _unreadCount = 0;
-  String? _lastNotificationId;
+  static String? _lastNotificationId;
 
   @override
   void initState() {
@@ -63,6 +63,7 @@ class _NotificationBellState extends State<NotificationBell> {
   }
 
   void _showNewNotificationAlert(UserNotification notification) {
+    ScaffoldMessenger.of(context).clearSnackBars(); // Éviter l'accumulation
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -70,30 +71,35 @@ class _NotificationBellState extends State<NotificationBell> {
             const Icon(Icons.notifications_active, color: Colors.white),
             SizedBox(width: 12.w),
             Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(notification.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(notification.message, maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
+              child: InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                  );
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(notification.title, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text(notification.message, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
               ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+              onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
             ),
           ],
         ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.primary,
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: "Voir",
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationScreen()),
-            );
-          },
-        ),
+        duration: const Duration(seconds: 8),
+        margin: EdgeInsets.all(16.w),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +8,7 @@ import 'package:shared_le_transporteur/models/commande.dart';
 import 'package:shared_le_transporteur/api/v1/order_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
+import 'package:intl/intl.dart';
 
 
 class OrderDetailsScreen extends StatefulWidget {
@@ -38,6 +41,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       
       final order = results[0] as Commande;
       final neg = results[1] as Map<String, dynamic>?;
+
+      debugPrint("DEBUG [OrderDetails] Raw order data from backend: ${jsonEncode(order.toJson())}");
 
       if (neg != null) {
         order.updateFromNegotiation(neg);
@@ -321,6 +326,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildStatusCard(),
+                  if (_currentOrder.isScheduled && _currentOrder.scheduledAt != null) ...[
+                    SizedBox(height: 20.h),
+                    _buildInfoSection(
+                      "Date et Heure de Livraison", 
+                      DateFormat('EEEE dd MMMM yyyy à HH:mm', 'fr_FR').format(_currentOrder.scheduledAt!.toLocal()), 
+                      Icons.calendar_today_outlined
+                    ),
+                  ],
                   SizedBox(height: 20.h),
                   _buildInfoSection("Description", _currentOrder.description, Icons.description_outlined),
                   SizedBox(height: 20.h),

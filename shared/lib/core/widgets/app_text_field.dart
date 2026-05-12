@@ -17,6 +17,8 @@ class AppTextField extends StatefulWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final int? maxLines;
   final int? minLines;
+  final bool readOnly;
+  final bool enabled;
 
   const AppTextField({
     super.key,
@@ -31,6 +33,8 @@ class AppTextField extends StatefulWidget {
     this.onFieldSubmitted,
     this.maxLines = 1,
     this.minLines,
+    this.readOnly = false,
+    this.enabled = true,
   });
 
 
@@ -51,6 +55,8 @@ class _AppTextFieldState extends State<AppTextField> {
       keyboardType: widget.keyboardType,
       maxLines: widget.isPassword ? 1 : widget.maxLines,
       minLines: widget.minLines,
+      readOnly: widget.readOnly,
+      enabled: widget.enabled,
       validator: widget.validator ??
           (value) {
             if (value == null || value.isEmpty) {

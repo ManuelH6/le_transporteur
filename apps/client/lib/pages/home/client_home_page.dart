@@ -100,7 +100,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
                 padding: EdgeInsets.all(4),
                 child: Icon(Icons.inventory_2_rounded, size: 26),
               ),
-              label: "Mes Livraisons",
+              label: "Mes Commandes",
             ),
             BottomNavigationBarItem(
               icon: Padding(
@@ -131,7 +131,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
               children: [
                 _buildDrawerSectionTitle('Menu principal'),
                 _buildDrawerItem(0, Icons.home_rounded, 'Accueil'),
-                _buildDrawerItem(1, Icons.inventory_2_rounded, 'Mes Livraisons'),
+                _buildDrawerItem(1, Icons.inventory_2_rounded, 'Mes Commandes'),
                 _buildDrawerItem(2, Icons.settings_rounded, 'Paramètres'),
                 
                 const Divider(),

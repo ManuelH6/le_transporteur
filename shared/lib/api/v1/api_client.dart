@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_le_transporteur/models/api_error_response.dart';
 import 'package:shared_le_transporteur/models/user.dart';
@@ -91,6 +92,8 @@ class ApiClient {
   Future<http.Response> post(String path, dynamic body) async {
     final t = await token;
     final url = Uri.parse('$baseUrl$path');
+    debugPrint('DEBUG [ApiClient] POST $url');
+    debugPrint('DEBUG [ApiClient] Payload: ${jsonEncode(body)}');
     try {
       final response = await http.post(
         url,
@@ -107,7 +110,7 @@ class ApiClient {
       return _handleResponse(response, 'POST', path);
     } catch (e) {
       if (e is ApiException && e.statusCode == 401) rethrow;
-      print('[ApiClient] Exception during POST $path: $e');
+      debugPrint('[ApiClient] Exception during POST $path: $e');
       rethrow;
     }
   }

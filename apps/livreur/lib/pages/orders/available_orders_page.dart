@@ -6,6 +6,7 @@ import 'package:shared_le_transporteur/models/commande.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
 import 'package:livreur_le_transporteur/pages/orders/order_details_page.dart';
 import 'package:shared_le_transporteur/api/v1/order_api.dart';
+import 'package:intl/intl.dart';
 
 class AvailableOrdersPage extends StatefulWidget {
   const AvailableOrdersPage({super.key});
@@ -141,7 +142,7 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
                     ),
                   ),
                   Text(
-                    PricingLogic.formaterIntervalle(commande.prixSuggere),
+                    "${commande.estimatedPrice?.toInt() ?? 0} FCFA",
                     style: GoogleFonts.poppins(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.bold,
@@ -180,6 +181,23 @@ class _AvailableOrdersPageState extends State<AvailableOrdersPage> {
                   ),
                 ],
               ),
+              if (commande.isScheduled && commande.scheduledAt != null) ...[
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_outlined, color: Colors.orange[800], size: 16.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      "Planifié pour : ${DateFormat('HH:mm').format(commande.scheduledAt!.toLocal())}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               if (commande.propositionClient != null) ...[
                 SizedBox(height: 12.h),
                 Container(

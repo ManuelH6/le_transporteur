@@ -246,6 +246,23 @@ class _CourseHistoryPageState extends State<CourseHistoryPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (commande.isScheduled && commande.scheduledAt != null) ...[
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_outlined, color: Colors.orange[800], size: 14.sp),
+                    SizedBox(width: 4.w),
+                    Text(
+                      "Planifié pour : ${DateFormat('HH:mm').format(commande.scheduledAt!.toLocal())}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange[800],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               SizedBox(height: 12.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

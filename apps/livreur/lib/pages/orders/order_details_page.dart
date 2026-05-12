@@ -8,6 +8,8 @@ import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_le_transporteur/services/notification_service.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final Commande commande;
@@ -65,10 +67,25 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Navigator.pop(context, true);
       }
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains("scheduled") && _commande.scheduledAt != null) {
+        final scheduledLocal = _commande.scheduledAt!.toLocal();
+        final timeStr = DateFormat('HH:mm').format(scheduledLocal);
+        
+        if (DateTime.now().isBefore(scheduledLocal)) {
+          errorMessage = "Il est trop tôt pour réserver cette course planifiée pour $timeStr.";
+        } else {
+          errorMessage = "L'heure prévue ($timeStr) pour cette course est déjà passée.";
+        }
+        
+        if (mounted) {
+          NotificationService().showError(errorMessage);
+          return;
+        }
+      }
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-        );
+        NotificationService().showError(e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -84,20 +101,89 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       }
       await orderApi.proposePrice(_commande.id, amount);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Proposition envoyée au client.', style: GoogleFonts.poppins()), backgroundColor: Colors.blue),
-        );
+        NotificationService().showSuccess("Proposition envoyée au client.");
         Navigator.pop(context, true);
       }
     } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.contains("scheduled") && _commande.scheduledAt != null) {
+        final scheduledLocal = _commande.scheduledAt!.toLocal();
+        final timeStr = DateFormat('HH:mm').format(scheduledLocal);
+        
+        if (DateTime.now().isBefore(scheduledLocal)) {
+          errorMessage = "Il est trop tôt pour réserver cette course planifiée pour $timeStr.";
+        } else {
+          errorMessage = "L'heure prévue ($timeStr) pour cette course est déjà passée.";
+        }
+        
+        if (mounted) {
+          NotificationService().showError(errorMessage);
+          return;
+        }
+      }
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e', style: GoogleFonts.poppins()), backgroundColor: Colors.red),
-        );
+        NotificationService().showError(e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _checkTimingAndProceed(String message, VoidCallback onProceed) {
+    if (_commande.isScheduled && _commande.scheduledAt != null) {
+      final scheduledLocal = _commande.scheduledAt!.toLocal();
+      if (DateTime.now().isAfter(scheduledLocal)) {
+        final timeStr = DateFormat('HH:mm').format(scheduledLocal);
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+            title: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange[800]),
+                SizedBox(width: 8.w),
+                Text('Heure dépassée', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Attention, l'heure prévue ($timeStr) pour cette course est déjà passée.",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.orange[900]),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  message,
+                  style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[800]),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey, fontWeight: FontWeight.w600)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onProceed();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[800],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                ),
+                child: Text('Continuer quand même', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+    }
+    onProceed();
   }
 
   void _contacterAdmin() async {
@@ -260,7 +346,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ),
             SizedBox(height: 8.h),
             Text(
-              "La livraison a été marquée comme terminée avec succès.",
+              "La course a été marquée comme terminée avec succès.",
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
             ),
@@ -346,6 +432,32 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               _commande.description,
               style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[800]),
             ),
+            if (_commande.isScheduled && _commande.scheduledAt != null) ...[
+              SizedBox(height: 24.h),
+              Text(
+                "Date et Heure de Livraison",
+                style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8.h),
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.access_time_outlined, color: Colors.orange[800], size: 20.sp),
+                    SizedBox(width: 12.w),
+                    Text(
+                      DateFormat('EEEE dd MMMM yyyy à HH:mm', 'fr_FR').format(_commande.scheduledAt!.toLocal()),
+                      style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.orange[900], fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             SizedBox(height: 24.h),
 
             // Addresses
@@ -424,12 +536,12 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     ),
                   ] else ...[
                     Text(
-                      "Prix suggéré (intervalle)",
+                      "Prix de la course",
                       style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
                     ),
                     SizedBox(height: 4.h),
                     Text(
-                      PricingLogic.formaterIntervalle(_commande.prixSuggere),
+                      "${_commande.estimatedPrice?.toInt() ?? 0} FCFA",
                       style: GoogleFonts.poppins(
                         fontSize: 18.sp,
                         fontWeight: FontWeight.bold,
@@ -480,48 +592,52 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             else if (widget.isAvailableMode)
               Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text('Confirmer', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                            content: Text('Voulez-vous accepter cette course au prix proposé par le client (${_commande.propositionClient?.toInt() ?? 0} FCFA) ?', style: GoogleFonts.poppins()),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
+                  if (_commande.propositionClient != null && _commande.propositionClient! > 0) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _checkTimingAndProceed("Voulez-vous quand même accepter cette course au prix proposé par le client ?", () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: Text('Confirmer', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+                                content: Text('Voulez-vous accepter cette course au prix proposé par le client (${_commande.propositionClient?.toInt() ?? 0} FCFA) ?', style: GoogleFonts.poppins()),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _accepterCommande();
+                                    },
+                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                                    child: Text('Accepter', style: GoogleFonts.poppins(color: Colors.white)),
+                                  ),
+                                ],
                               ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  _accepterCommande();
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                                child: Text('Accepter', style: GoogleFonts.poppins(color: Colors.white)),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                      child: Text(
-                        "Valider le prix client",
-                        style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                            );
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        ),
+                        child: Text(
+                          "Valider le prix client",
+                          style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
                       ),
                     ),
-                  ),
-                  SizedBox(height: 12.h),
+                    SizedBox(height: 12.h),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: _showProposePriceDialog,
+                      onPressed: () => _checkTimingAndProceed("Voulez-vous quand même faire une proposition pour cette course ?", _showProposePriceDialog),
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         side: const BorderSide(color: AppColors.primary),

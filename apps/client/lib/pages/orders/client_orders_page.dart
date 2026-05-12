@@ -236,6 +236,23 @@ class _ClientOrdersPageState extends State<ClientOrdersPage> {
                   ),
                 ],
               ),
+              if (order.isScheduled && order.scheduledAt != null) ...[
+                SizedBox(height: 8.h),
+                Row(
+                  children: [
+                    Icon(Icons.access_time_outlined, size: 14.sp, color: AppColors.primary),
+                    SizedBox(width: 4.w),
+                    Text(
+                      "Prévu pour : ${DateFormat('HH:mm').format(order.scheduledAt!.toLocal())}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp, 
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const Divider(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

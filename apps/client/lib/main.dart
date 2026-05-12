@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:client_le_transporteur/pages/splash_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
@@ -35,6 +36,15 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: Colors.white,
             useMaterial3: true,
           ),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('fr', 'FR'),
+          ],
+          locale: const Locale('fr', 'FR'),
           home: const SplashScreen(),
         );
       },
