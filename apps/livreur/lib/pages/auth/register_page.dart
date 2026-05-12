@@ -9,8 +9,6 @@ import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
 import 'package:livreur_le_transporteur/pages/auth/login_page.dart';
-import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
-import 'package:shared_le_transporteur/screens/auth/otp_verification_screen.dart';
 import 'package:shared_le_transporteur/screens/auth/unavailable_country_screen.dart';
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 

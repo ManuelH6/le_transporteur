@@ -102,9 +102,9 @@ class OrderApi {
   Future<void> confirmPrice(String orderId, double amount, String paymentMethod) async {
     final payload = {
       'amount': amount,
-      'method': paymentMethod, // Using 'method' as identified in Swagger/Naming conventions
-      'paymentMethod': paymentMethod, // Keeping for backward compatibility if needed
-      'payment_method': paymentMethod, // Adding snake_case just in case
+      'method': paymentMethod,
+      'paymentMethod': paymentMethod,
+      'payment_method': paymentMethod,
     };
     debugPrint("DEBUG [confirmPrice] Payload: $payload");
     await _client.patch('/api/v1/negotiation/$orderId/confirm', payload);

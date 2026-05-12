@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_le_transporteur/api/v1/api_client.dart';
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
-import 'package:shared_le_transporteur/models/api_error_response.dart';
 import 'package:shared_le_transporteur/core/widgets/error_dialog.dart';
 import 'package:shared_le_transporteur/core/widgets/success_dialog.dart';
 

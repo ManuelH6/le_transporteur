@@ -6,7 +6,6 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
-import 'package:shared_le_transporteur/services/mock_database.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
 

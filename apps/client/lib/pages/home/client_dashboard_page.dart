@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
-import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/notification_bell.dart';
-import 'package:shared_le_transporteur/screens/notifications/notification_screen.dart';
 import 'package:client_le_transporteur/pages/home/new_order_form_page.dart' as client_le_transporteur;
 
 class ClientDashboardPage extends StatefulWidget {

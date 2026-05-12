@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:client_le_transporteur/pages/home/client_dashboard_page.dart';
-import 'package:client_le_transporteur/pages/maps/client_map_page.dart';
 import 'package:client_le_transporteur/pages/orders/client_orders_page.dart';
 import 'package:client_le_transporteur/pages/settings/client_settings_page.dart';
 

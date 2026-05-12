@@ -7,7 +7,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_le_transporteur/api/v1/api_client.dart';
 import 'package:shared_le_transporteur/api/v1/order_api.dart';
 import 'package:shared_le_transporteur/api/v1/report_api.dart';
-import 'package:shared_le_transporteur/models/commande.dart';
 
 enum TransactionType { earning, payout }
 

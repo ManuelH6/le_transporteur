@@ -8,7 +8,6 @@ import 'package:intl/intl.dart';
 import 'package:shared_le_transporteur/api/v1/api_client.dart';
 import 'package:shared_le_transporteur/api/v1/order_api.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
-import 'package:shared_le_transporteur/models/user.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
 
 class ReportService {
@@ -207,7 +206,7 @@ class ReportService {
               ),
               child: pw.Text(
                 'Note : Ce rapport est généré automatiquement par l\'application Le Transporteur. Les revenus indiqués sont basés sur les courses finalisées et confirmées dans le système.',
-                style: const pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic),
+                style: pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic),
                 textAlign: pw.TextAlign.center,
               ),
             ),

@@ -1,10 +1,7 @@
 // shared/lib/models/commande.dart
 
-import 'dart:convert';
 import 'package:shared_le_transporteur/models/lieu.dart';
-
 import 'package:shared_le_transporteur/models/address.dart';
-import 'package:flutter/foundation.dart';
 
 
 class Commande {

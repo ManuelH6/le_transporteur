@@ -5,7 +5,6 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
 import 'package:shared_le_transporteur/models/user.dart';
 import 'package:livreur_le_transporteur/pages/profile/profile_page.dart';
-import 'package:livreur_le_transporteur/pages/settings/settings_page.dart';
 import 'package:livreur_le_transporteur/pages/auth/login_page.dart';
 
 class CourierDrawer extends StatelessWidget {

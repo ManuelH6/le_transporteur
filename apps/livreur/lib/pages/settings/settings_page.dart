@@ -9,7 +9,6 @@ import 'package:livreur_le_transporteur/pages/intro/onboarding_page.dart';
 import 'package:shared_le_transporteur/screens/settings/change_password_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/notifications_settings_screen.dart';
-import 'package:shared_le_transporteur/screens/settings/pdf_viewer_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/user_manual_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/legal_documents_screen.dart';
 import 'package:shared_le_transporteur/services/report_service.dart';
