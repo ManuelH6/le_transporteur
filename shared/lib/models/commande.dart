@@ -96,11 +96,15 @@ class Commande {
   });
 
   String getDisplayStatus() {
+    // Custom logic for negotiation status overrides
     if (negotiationStatus == 'pending_client_approval') {
-      return 'Action requise : Négociation';
+      return 'En négociation';
     }
     if (negotiationStatus == 'rejected') {
       return 'Négociation rejetée';
+    }
+    if (negotiationStatus == 'confirmed') {
+      return 'Prix confirmé';
     }
 
     switch (status.toLowerCase()) {
@@ -113,9 +117,9 @@ class Commande {
       case 'assigned':
       case 'accepted':
       case 'accepté':
-        return 'Assignée';
+        return 'Commande acceptée';
       case 'en_discussion_tarifaire':
-        return 'Négociation';
+        return 'En négociation';
       case 'prix_valide':
         return 'Prix confirmé';
       case 'en_livraison':
@@ -123,14 +127,14 @@ class Commande {
       case 'processing':
       case 'ongoing':
       case 'started':
-        return 'En cours de livraison';
+        return 'Livraison en cours';
       case 'livree':
       case 'livré':
       case 'delivered':
       case 'completed':
       case 'terminee':
       case 'terminée':
-        return 'Livrée';
+        return 'Livré';
       case 'echec':
         return 'Échec';
       case 'conflit':
@@ -142,6 +146,102 @@ class Commande {
         return 'Annulée';
       default:
         return status;
+    }
+  }
+
+  String get humanizedSummary {
+    if (serviceType.toLowerCase() == 'achat') {
+      return "Achat : $description";
+    } else {
+      final dest = deliveryAddress?.street ?? livraison.adresse;
+      final destShort = dest.split(',').first.trim();
+      return "De : Moi ➔ À : $destShort";
+    }
+  }
+
+  String getDisplayLocation(bool isPickup) {
+    final addr = isPickup ? pickupAddress : deliveryAddress;
+    final fallback = isPickup ? (pickup?.adresse ?? "") : (livraison?.adresse ?? "");
+    
+    String? result;
+
+    // 1. Try to build from Address object with multiple field checks
+    if (addr != null) {
+      final city = addr.city?.trim() ?? "";
+      final district = addr.district?.trim() ?? "";
+      final street = addr.street?.trim() ?? "";
+      final name = addr.name?.trim() ?? "";
+      
+      // Prioritize City + District/Street for a concise but precise location
+      if (city.isNotEmpty) {
+        if (district.isNotEmpty && !district.toLowerCase().contains(city.toLowerCase())) {
+          result = "$city, $district";
+        } else if (street.isNotEmpty && !street.toLowerCase().contains(city.toLowerCase())) {
+          result = "$city, $street";
+        } else {
+          result = city;
+        }
+      } else if (district.isNotEmpty) {
+        result = street.isNotEmpty && !street.toLowerCase().contains(district.toLowerCase()) 
+            ? "$district, $street" 
+            : district;
+      } else if (street.isNotEmpty) {
+        result = street;
+      } else if (name.isNotEmpty) {
+        result = name;
+      }
+    }
+
+    // 2. Fallback to the main address string or Lieu address if Address object was insufficient
+    if (result == null || result.trim().isEmpty) {
+      result = fallback;
+    }
+
+    // 3. Cleaning phase
+    if (result.isNotEmpty) {
+      // Remove country names and redundant segments
+      result = result.replaceAll(RegExp(r',?\s*Bénin', caseSensitive: false), "");
+      result = result.replaceAll(RegExp(r',?\s*Benin', caseSensitive: false), "");
+      result = result.replaceAll(RegExp(r',?\s*Togo', caseSensitive: false), "");
+      
+      final segments = result.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      if (result.length > 45 && segments.length > 2) {
+        result = "${segments[0]}, ${segments[1]}";
+      }
+    }
+    
+    result = result.trim();
+    
+    // 4. Final safety defaults
+    if (result.isEmpty) {
+      return isPickup ? "Lieu de retrait" : "Destination";
+    }
+    
+    return result;
+  }
+
+  String getDisplayTime() {
+    if (isScheduled && scheduledAt != null) {
+      final hour = scheduledAt!.hour.toString().padLeft(2, '0');
+      final min = scheduledAt!.minute.toString().padLeft(2, '0');
+      return "Prévu à $hour:$min";
+    }
+    
+    final now = DateTime.now();
+    final diff = now.difference(dateCreation);
+    
+    if (diff.inMinutes < 60) {
+      return "Il y a ${diff.inMinutes} min";
+    } else if (diff.inHours < 24 && now.day == dateCreation.day) {
+      final hour = dateCreation.hour.toString().padLeft(2, '0');
+      final min = dateCreation.minute.toString().padLeft(2, '0');
+      return "Aujourd'hui à $hour:$min";
+    } else {
+      final day = dateCreation.day.toString().padLeft(2, '0');
+      final month = dateCreation.month.toString().padLeft(2, '0');
+      final hour = dateCreation.hour.toString().padLeft(2, '0');
+      final min = dateCreation.minute.toString().padLeft(2, '0');
+      return "$day/$month à $hour:$min";
     }
   }
 

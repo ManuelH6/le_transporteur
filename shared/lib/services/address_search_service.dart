@@ -191,4 +191,26 @@ class AddressSearchService {
   }
 
   double _toRadians(double degrees) => degrees * pi / 180;
+
+  /// Gets the country name from coordinates using Nominatim.
+  Future<String?> reverseGeocodeCountry(double lat, double lng) async {
+    try {
+      final url = Uri.parse(
+          'https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lng&format=json&accept-language=fr');
+      final response = await http.get(url, headers: {
+        'User-Agent': 'LivraisonExpressBenin/1.0 (manuel@email.com)'
+      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final address = data['address'];
+        if (address != null) {
+          return address['country'] as String?;
+        }
+      }
+    } catch (e) {
+      print('Reverse geocode error: $e');
+    }
+    return null;
+  }
 }

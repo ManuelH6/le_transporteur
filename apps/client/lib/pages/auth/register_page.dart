@@ -185,35 +185,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   SizedBox(height: 12.h),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedGender,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          prefixIcon: Icon(Icons.people_outline, size: 20.sp, color: Colors.grey),
-                          labelText: 'Genre',
-                          labelStyle: TextStyle(fontSize: 12.sp, color: Colors.grey),
-                        ),
-                        items: _genders.map((gender) {
-                          return DropdownMenuItem<String>(
-                            value: gender['value'],
-                            child: Text(gender['display']!, style: TextStyle(fontSize: 14.sp)),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedGender = value);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
+                  _buildGenderToggle(),
                   SizedBox(height: 12.h),
                   AppTextField(controller: _passwordController, hintText: "Mot de passe", prefixIcon: Icons.lock_outline, isPassword: true),
                   SizedBox(height: 12.h),
@@ -255,6 +227,55 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGenderToggle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
+          child: Text(
+            "Genre",
+            style: GoogleFonts.poppins(
+              fontSize: 13.sp,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        Row(
+          children: _genders.map((gender) {
+            final isSelected = _selectedGender == gender['value'];
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedGender = gender['value']!),
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 4.w),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : Colors.grey[300]!,
+                    ),
+                  ),
+                  child: Text(
+                    gender['display']!,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.sp,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? Colors.white : Colors.grey[600],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

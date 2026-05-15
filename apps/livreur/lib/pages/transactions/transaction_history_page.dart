@@ -103,14 +103,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF0EB),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFFFF0EB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.text, size: 20.sp),
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? AppColors.darkText : AppColors.text, size: 20.sp),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -118,14 +119,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           style: GoogleFonts.poppins(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
+            color: isDark ? AppColors.darkText : AppColors.text,
           ),
         ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text("Erreur: $_error"))
+              ? Center(child: Text("Erreur: $_error", style: GoogleFonts.poppins(color: isDark ? AppColors.darkText : AppColors.text)))
               : LayoutBuilder(
                   builder: (context, constraints) {
                     return Column(
@@ -143,16 +144,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   },
                 ),
     );
-
   }
 
   Widget _buildSummaryHeader(BoxConstraints constraints) {
     final horizontalPadding = constraints.maxWidth * 0.05;
     final verticalPadding = constraints.maxWidth * 0.06;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
-      color: Colors.white,
+      color: isDark ? AppColors.darkSurface : Colors.white,
       padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
       child: Column(
         children: [
@@ -160,7 +161,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
             "Solde Actuel",
             style: GoogleFonts.poppins(
               fontSize: constraints.maxWidth * 0.035,
-              color: Colors.grey[600],
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
           SizedBox(height: constraints.maxWidth * 0.01),
@@ -186,7 +187,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               Container(
                 width: 1,
                 height: constraints.maxWidth * 0.08,
-                color: Colors.grey[300],
+                color: isDark ? Colors.grey[800] : Colors.grey[300],
               ),
               _buildSummaryItem(
                 constraints,
@@ -197,7 +198,6 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               ),
             ],
           ),
-
         ],
       ),
     );
@@ -228,6 +228,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     IconData icon,
     Color color,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Row(
@@ -238,7 +239,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               label,
               style: GoogleFonts.poppins(
                 fontSize: constraints.maxWidth * 0.03,
-                color: Colors.grey[600],
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
           ],
@@ -249,7 +250,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           style: GoogleFonts.poppins(
             fontSize: constraints.maxWidth * 0.04,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
+            color: isDark ? AppColors.darkText : AppColors.text,
           ),
         ),
       ],
@@ -257,6 +258,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Widget _buildFilterSection(BoxConstraints constraints) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: constraints.maxWidth * 0.15,
       margin: EdgeInsets.symmetric(vertical: constraints.maxWidth * 0.03),
@@ -278,15 +280,15 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               selectedColor: AppColors.primary,
               labelStyle: GoogleFonts.poppins(
                 fontSize: constraints.maxWidth * 0.035,
-                color: isSelected ? Colors.white : AppColors.text,
+                color: isSelected ? Colors.white : (isDark ? AppColors.darkText : AppColors.text),
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
-              backgroundColor: Colors.white,
+              backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(constraints.maxWidth * 0.05),
               ),
               side: BorderSide(
-                color: isSelected ? AppColors.primary : Colors.grey[300]!,
+                color: isSelected ? AppColors.primary : (isDark ? Colors.grey[800]! : Colors.grey[300]!),
               ),
             ),
           );
@@ -328,21 +330,20 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         return _buildTransactionItem(constraints, transaction);
       },
     );
-  }
-
-  Widget _buildTransactionItem(BoxConstraints constraints, TransactionModel transaction) {
+  }  Widget _buildTransactionItem(BoxConstraints constraints, TransactionModel transaction) {
     final isEarning = transaction.type == TransactionType.earning;
     final itemPadding = constraints.maxWidth * 0.04;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       margin: EdgeInsets.only(bottom: constraints.maxWidth * 0.03),
       padding: EdgeInsets.all(itemPadding),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -372,14 +373,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   style: GoogleFonts.poppins(
                     fontSize: constraints.maxWidth * 0.038,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
+                    color: isDark ? AppColors.darkText : AppColors.text,
                   ),
                 ),
                 Text(
                   transaction.subtitle,
                   style: GoogleFonts.poppins(
                     fontSize: constraints.maxWidth * 0.03,
-                    color: Colors.grey[600],
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
               ],
@@ -399,9 +400,8 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
               Text(
                 DateFormat('dd MMM, HH:mm', 'fr_FR').format(transaction.date),
                 style: GoogleFonts.poppins(
-
                   fontSize: constraints.maxWidth * 0.028,
-                  color: Colors.grey[500],
+                  color: isDark ? Colors.grey[500] : Colors.grey[500],
                 ),
               ),
             ],
@@ -410,4 +410,4 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
       ),
     );
   }
-}
+ }

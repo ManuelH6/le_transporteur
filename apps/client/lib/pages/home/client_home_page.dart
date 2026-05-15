@@ -10,6 +10,9 @@ import 'package:shared_le_transporteur/api/v1/api_client.dart';
 import 'package:shared_le_transporteur/models/user.dart';
 import 'package:shared_le_transporteur/api/v1/auth_api.dart';
 import 'package:client_le_transporteur/pages/auth/login_page.dart';
+import 'package:shared_le_transporteur/core/widgets/user_drawer_header.dart';
+import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart';
+import 'package:shared_le_transporteur/screens/info/about_screen.dart';
 
 class ClientHomePage extends StatefulWidget {
   const ClientHomePage({super.key});
@@ -44,18 +47,19 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      drawer: _buildDrawer(),
+      drawer: _buildDrawer(isDark),
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.darkSurface : Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -65,9 +69,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
+          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: Colors.grey[400],
+          unselectedItemColor: isDark ? Colors.grey[600] : Colors.grey[400],
           selectedLabelStyle: GoogleFonts.poppins(
             fontSize: 11.sp,
             fontWeight: FontWeight.w700,
@@ -119,9 +123,9 @@ class _ClientHomePageState extends State<ClientHomePage> {
     );
   }
 
-  Widget _buildDrawer() {
+  Widget _buildDrawer(bool isDark) {
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
       child: Column(
         children: [
           _buildDrawerHeader(),
@@ -143,68 +147,49 @@ class _ClientHomePageState extends State<ClientHomePage> {
                   // Action pour le support
                 }),
                 _buildDrawerItem(5, Icons.info_outline_rounded, 'À propos', onTap: () {
-                  // Action pour à propos
+                  Navigator.pop(context);
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen()));
                 }),
               ],
             ),
           ),
           _buildLogoutItem(),
+          Padding(
+            padding: EdgeInsets.only(bottom: 16.h),
+            child: Text(
+              'v1.1.0',
+              style: GoogleFonts.poppins(
+                fontSize: 10.sp,
+                color: Colors.grey[400],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildDrawerHeader() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.only(top: 60.h, bottom: 24.h, left: 24.w, right: 24.w),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primary, Color(0xFFFF8C42)],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: EdgeInsets.all(3.w),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: CircleAvatar(
-              radius: 35.r,
-              backgroundColor: Colors.grey[200],
-              child: _user?.name != null 
-                ? Text(_user!.name[0].toUpperCase(), style: GoogleFonts.poppins(fontSize: 24.sp, fontWeight: FontWeight.bold, color: AppColors.primary))
-                : Icon(Icons.person, size: 35.sp, color: AppColors.primary),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            _user?.name ?? 'Utilisateur',
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            _user?.email ?? 'Chargement...',
-            style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 13.sp,
-            ),
-          ),
-        ],
-      ),
+    return UserDrawerHeader(
+      user: _user,
+      onTapProfile: () {
+        if (_user != null) {
+          Navigator.pop(context);
+          Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen(user: _user!)));
+        }
+      },
+      onTapEdit: () {
+        if (_user != null) {
+          Navigator.pop(context);
+          Navigator.push(context, MaterialPageRoute(builder: (context) => EditProfileScreen(user: _user!)));
+        }
+      },
     );
   }
 
   Widget _buildDrawerSectionTitle(String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.only(left: 24.w, top: 16.h, bottom: 8.h),
       child: Text(
@@ -212,7 +197,7 @@ class _ClientHomePageState extends State<ClientHomePage> {
         style: GoogleFonts.poppins(
           fontSize: 11.sp,
           fontWeight: FontWeight.bold,
-          color: Colors.grey[500],
+          color: isDark ? Colors.grey[600] : Colors.grey[500],
           letterSpacing: 1.2,
         ),
       ),
@@ -221,15 +206,16 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   Widget _buildDrawerItem(int index, IconData icon, String title, {VoidCallback? onTap}) {
     final isSelected = _currentIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
       contentPadding: EdgeInsets.symmetric(horizontal: 24.w),
-      leading: Icon(icon, color: isSelected ? AppColors.primary : Colors.grey[600], size: 22.sp),
+      leading: Icon(icon, color: isSelected ? AppColors.primary : (isDark ? Colors.grey[400] : Colors.grey[600]), size: 22.sp),
       title: Text(
         title,
         style: GoogleFonts.poppins(
           fontSize: 14.sp,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          color: isSelected ? AppColors.primary : Colors.black87,
+          color: isSelected ? AppColors.primary : (isDark ? AppColors.darkText : Colors.black87),
         ),
       ),
       selected: isSelected,

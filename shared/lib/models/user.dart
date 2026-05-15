@@ -18,6 +18,8 @@ class User {
   final DateTime? livreurReviewedAt;
   final String? livreurReviewedBy;
   final String? livreurRejectionReason;
+  final bool isBlocked;
+  final double walletBalance;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -31,6 +33,8 @@ class User {
     this.genderrole,
     this.isEmailVerified = false,
     this.isArchived = false,
+    this.isBlocked = false,
+    this.walletBalance = 0.0,
     this.profileImageUrl,
     this.profileImagePublicId,
     this.signupIntent,
@@ -53,6 +57,8 @@ class User {
         'genderrole': genderrole,
         'isEmailVerified': isEmailVerified,
         'isArchived': isArchived,
+        'isBlocked': isBlocked,
+        'walletBalance': walletBalance,
         'profileImageUrl': profileImageUrl,
         'profileImagePublicId': profileImagePublicId,
         'signupIntent': signupIntent,
@@ -75,6 +81,8 @@ class User {
         genderrole: json['genderrole'] as String?,
         isEmailVerified: json['isEmailVerified'] as bool? ?? false,
         isArchived: json['isArchived'] as bool? ?? false,
+        isBlocked: json['isBlocked'] as bool? ?? false,
+        walletBalance: (json['walletBalance'] as num?)?.toDouble() ?? 0.0,
         profileImageUrl: json['profileImageUrl'] as String?,
         profileImagePublicId: json['profileImagePublicId'] as String?,
         signupIntent: json['signupIntent'] as String?,
@@ -105,6 +113,8 @@ class User {
     String? genderrole,
     bool? isEmailVerified,
     bool? isArchived,
+    bool? isBlocked,
+    double? walletBalance,
     String? profileImageUrl,
     String? profileImagePublicId,
     String? signupIntent,
@@ -126,6 +136,8 @@ class User {
       genderrole: genderrole ?? this.genderrole,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       isArchived: isArchived ?? this.isArchived,
+      isBlocked: isBlocked ?? this.isBlocked,
+      walletBalance: walletBalance ?? this.walletBalance,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       profileImagePublicId: profileImagePublicId ?? this.profileImagePublicId,
       signupIntent: signupIntent ?? this.signupIntent,

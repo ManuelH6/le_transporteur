@@ -66,17 +66,24 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.darkBackground : Colors.white,
       appBar: AppBar(
         title: Text(
           "Changer le mot de passe",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.darkText : AppColors.text,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? Colors.white : AppColors.text, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24.w),
@@ -87,7 +94,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               Text(
                 "Votre nouveau mot de passe doit être différent de l'ancien.",
-                style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
+                style: GoogleFonts.poppins(fontSize: 14.sp, color: isDark ? Colors.grey[400] : Colors.grey[600]),
               ),
               SizedBox(height: 32.h),
               _buildPasswordField(
@@ -95,6 +102,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 label: "Ancien mot de passe",
                 obscure: _obscureOld,
                 onToggle: () => setState(() => _obscureOld = !_obscureOld),
+                isDark: isDark,
               ),
               SizedBox(height: 20.h),
               _buildPasswordField(
@@ -102,6 +110,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 label: "Nouveau mot de passe",
                 obscure: _obscureNew,
                 onToggle: () => setState(() => _obscureNew = !_obscureNew),
+                isDark: isDark,
               ),
               SizedBox(height: 20.h),
               _buildPasswordField(
@@ -109,6 +118,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 label: "Confirmer le mot de passe",
                 obscure: _obscureConfirm,
                 onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                isDark: isDark,
                 validator: (val) {
                   if (val != _newPasswordController.text) {
                     return "Les mots de passe ne correspondent pas";
@@ -134,6 +144,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     required String label,
     required bool obscure,
     required VoidCallback onToggle,
+    required bool isDark,
     String? Function(String?)? validator,
   }) {
     return Column(
@@ -141,25 +152,29 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w500, color: Colors.grey[700]),
+          style: GoogleFonts.poppins(
+            fontSize: 14.sp, 
+            fontWeight: FontWeight.w500, 
+            color: isDark ? Colors.grey[300] : Colors.grey[700],
+          ),
         ),
         SizedBox(height: 8.h),
         TextFormField(
           controller: controller,
           obscureText: obscure,
-          style: GoogleFonts.poppins(fontSize: 15.sp),
+          style: GoogleFonts.poppins(fontSize: 15.sp, color: isDark ? Colors.white : Colors.black87),
           decoration: InputDecoration(
             hintText: "••••••••",
-            hintStyle: TextStyle(color: Colors.grey[400]),
+            hintStyle: TextStyle(color: isDark ? Colors.grey[600] : Colors.grey[400]),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: isDark ? Colors.grey[900] : Colors.grey[50],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
-              borderSide: BorderSide(color: Colors.grey[200]!),
+              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),

@@ -8,17 +8,24 @@ class UserManualScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.darkBackground : Colors.white,
       appBar: AppBar(
         title: Text(
           "Manuel d'utilisation",
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.darkText : AppColors.text,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? Colors.white : AppColors.text, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: ListView(
         padding: EdgeInsets.all(24.w),
@@ -28,30 +35,34 @@ class UserManualScreen extends StatelessWidget {
             "Créez votre compte",
             "Inscrivez-vous en tant que client ou livreur et validez votre email.",
             Icons.person_add_outlined,
+            isDark,
           ),
           _buildStep(
             "2",
             "Passez une commande",
             "Indiquez le point de départ, la destination et le type de colis.",
             Icons.shopping_cart_outlined,
+            isDark,
           ),
           _buildStep(
             "3",
             "Suivez votre livraison",
             "Suivez en temps réel la position de votre colis sur la carte.",
             Icons.map_outlined,
+            isDark,
           ),
           _buildStep(
             "4",
             "Confirmez la réception",
             "Une fois le colis livré, validez la réception et notez le livreur.",
             Icons.check_circle_outline,
+            isDark,
           ),
           SizedBox(height: 32.h),
           Container(
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.05),
+              color: AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.05),
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
             ),
@@ -61,13 +72,17 @@ class UserManualScreen extends StatelessWidget {
                 SizedBox(height: 12.h),
                 Text(
                   "Besoin d'aide supplémentaire ?",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 16.sp,
+                    color: isDark ? AppColors.darkText : AppColors.text,
+                  ),
                 ),
                 SizedBox(height: 8.h),
                 Text(
                   "Notre support est disponible 24h/7j pour répondre à vos questions.",
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[600]),
+                  style: GoogleFonts.poppins(fontSize: 13.sp, color: isDark ? Colors.grey[400] : Colors.grey[600]),
                 ),
                 SizedBox(height: 16.h),
                 ElevatedButton(
@@ -86,7 +101,7 @@ class UserManualScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStep(String number, String title, String description, IconData icon) {
+  Widget _buildStep(String number, String title, String description, IconData icon, bool isDark) {
     return Padding(
       padding: EdgeInsets.only(bottom: 24.h),
       child: Row(
@@ -116,14 +131,18 @@ class UserManualScreen extends StatelessWidget {
                     SizedBox(width: 8.w),
                     Text(
                       title,
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 15.sp),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 15.sp,
+                        color: isDark ? AppColors.darkText : AppColors.text,
+                      ),
                     ),
                   ],
                 ),
                 SizedBox(height: 4.h),
                 Text(
                   description,
-                  style: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey[600], height: 1.5),
+                  style: GoogleFonts.poppins(fontSize: 13.sp, color: isDark ? Colors.grey[400] : Colors.grey[600], height: 1.5),
                 ),
               ],
             ),

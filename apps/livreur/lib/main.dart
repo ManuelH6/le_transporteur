@@ -7,7 +7,6 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:shared_le_transporteur/api/v1/api_client.dart';
 import 'package:livreur_le_transporteur/pages/intro/onboarding_page.dart';
 import 'package:livreur_le_transporteur/pages/home/home_page.dart';
-
 import 'package:livreur_le_transporteur/pages/profile_creation/analyse_encours_page.dart';
 import 'package:livreur_le_transporteur/pages/profile_creation/zone_couverture_page.dart';
 import 'package:livreur_le_transporteur/models/registration_data.dart';
@@ -16,6 +15,10 @@ import 'package:shared_le_transporteur/models/user.dart';
 import 'package:shared_le_transporteur/api/v1/livreur_api.dart';
 import 'package:shared_le_transporteur/models/livreur_profile.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_le_transporteur/services/security_service.dart';
+import 'package:shared_le_transporteur/services/theme_service.dart';
+import 'package:shared_le_transporteur/services/favorites_service.dart';
+import 'package:shared_le_transporteur/screens/security/app_lock_screen.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -23,18 +26,19 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await Hive.initFlutter();
+  await ThemeService.init();
+  await FavoritesService.init();
   await Hive.openBox('auth');
   await Hive.openBox('livreur_registration');
+  await SecurityService().init();
 
   final apiClient = ApiClient();
   final token = await apiClient.token;
   User? user = await apiClient.user;
 
-  // Refresh user data if logged in to get latest status
   if (token != null && user != null) {
     try {
       user = await UserApi().getMe().timeout(const Duration(seconds: 10));
-
       final authBox = await Hive.openBox('auth');
       await apiClient.saveTokens(token, authBox.get('refreshToken'), user);
     } catch (e) {
@@ -48,18 +52,11 @@ void main() async {
     LivreurProfile? profile;
     try {
       profile = await LivreurApi().getMyProfile();
-    } catch (e) {
-      // Profile might not exist yet
-    }
+    } catch (e) {}
 
     final status = (profile?.verificationStatus ?? user.livreurRequestStatus)?.toLowerCase();
-    
-    // Cache status locally
     final box = Hive.box('livreur_registration');
-    if (status != null) {
-      await box.put('verification_status', status);
-    }
-    
+    if (status != null) await box.put('verification_status', status);
     final finalStatus = status ?? box.get('verification_status');
 
     if (finalStatus == 'approved') {
@@ -67,7 +64,6 @@ void main() async {
     } else if (finalStatus == 'pending' || finalStatus == 'rejected') {
       initialHome = AnalyseEncoursPage(registrationData: RegistrationData());
     } else {
-      // status is 'none'
       initialHome = ZoneCouverturePage(
         registrationData: RegistrationData(
           nomComplet: user.name,
@@ -76,9 +72,7 @@ void main() async {
         ),
       );
     }
-
   } else {
-
     initialHome = const OnboardingPage();
   }
 
@@ -91,7 +85,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Remove the splash screen after the first build
     FlutterNativeSplash.remove();
 
     return ScreenUtilInit(
@@ -99,15 +92,46 @@ class MyApp extends StatelessWidget {
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          scaffoldMessengerKey: NotificationService().messengerKey,
-          navigatorKey: NotificationService().navigatorKey,
-          title: 'Livreur Le Transporteur',
-          theme: AppTheme.theme,
-          home: initialHome,
+        return ValueListenableBuilder(
+          valueListenable: ThemeService.listenable,
+          builder: (context, box, _) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              scaffoldMessengerKey: NotificationService().messengerKey,
+              navigatorKey: NotificationService().navigatorKey,
+              title: 'Livreur Le Transporteur',
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeService.getThemeMode(),
+              home: SecurityWrapper(child: initialHome),
+            );
+          },
         );
       },
     );
+  }
+}
+
+class SecurityWrapper extends StatefulWidget {
+  final Widget child;
+  const SecurityWrapper({super.key, required this.child});
+
+  @override
+  State<SecurityWrapper> createState() => _SecurityWrapperState();
+}
+
+class _SecurityWrapperState extends State<SecurityWrapper> {
+  bool _isLocked = SecurityService().isLockEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLocked) {
+      return AppLockScreen(
+        onAuthenticated: () {
+          setState(() => _isLocked = false);
+        },
+      );
+    }
+    return widget.child;
   }
 }

@@ -56,12 +56,14 @@ class UserNotification {
   });
 
   factory UserNotification.fromJson(Map<String, dynamic> json) {
+    // ignore: avoid_print
+    // print("DEBUG [UserNotification] Parsing: ${json['id'] ?? json['_id']} | isRead raw: ${json['isRead']} | read raw: ${json['read']} | is_read raw: ${json['is_read']} | readAt raw: ${json['readAt']}");
     return UserNotification(
       id: (json['id'] ?? json['_id'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
       message: (json['message'] ?? '').toString(),
       type: (json['type'] ?? 'general').toString(),
-      isRead: json['isRead'] ?? json['read'] ?? json['is_read'] ?? false,
+      isRead: json['readAt'] != null || json['isRead'] == true || json['read'] == true || json['is_read'] == true,
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt'].toString()) 
           : DateTime.now(),

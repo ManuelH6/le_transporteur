@@ -9,4 +9,5 @@ publish_to: none
 workspace:
   - apps/client
   - apps/livreur
+  - apps/admin
   - shared

@@ -5,12 +5,14 @@ class Lieu {
   final double lat;
   final double lng;
   final int freqUse;
+  final bool isFavorite;
 
   const Lieu({
     required this.adresse,
     required this.lat,
     required this.lng,
     this.freqUse = 0,
+    this.isFavorite = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -18,6 +20,7 @@ class Lieu {
         'lat': lat,
         'lng': lng,
         'freqUse': freqUse,
+        'isFavorite': isFavorite,
       };
 
   factory Lieu.fromJson(Map<String, dynamic> json) => Lieu(
@@ -25,6 +28,7 @@ class Lieu {
         lat: (json['lat'] as num).toDouble(),
         lng: (json['lng'] as num).toDouble(),
         freqUse: (json['freqUse'] as num?)?.toInt() ?? 0,
+        isFavorite: (json['isFavorite'] as bool?) ?? false,
       );
 
   Lieu copyWith({
@@ -32,12 +36,14 @@ class Lieu {
     double? lat,
     double? lng,
     int? freqUse,
+    bool? isFavorite,
   }) {
     return Lieu(
       adresse: adresse ?? this.adresse,
       lat: lat ?? this.lat,
       lng: lng ?? this.lng,
       freqUse: freqUse ?? this.freqUse,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 

@@ -33,14 +33,14 @@ class Address {
       };
 
   factory Address.fromJson(Map<String, dynamic> json) => Address(
-        name: json['name'] as String?,
-        phone: json['phone'] as String?,
-        country: json['country'] as String?,
-        city: json['city'] as String?,
-        district: json['district'] as String?,
-        street: json['street'] as String?,
-        latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
-        longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+        name: (json['name'] ?? json['full_name'] ?? json['contact_name'])?.toString(),
+        phone: (json['phone'] ?? json['phoneNumber'] ?? json['tel'])?.toString(),
+        country: (json['country'] ?? json['pays'])?.toString(),
+        city: (json['city'] ?? json['town'] ?? json['locality'] ?? json['ville'])?.toString(),
+        district: (json['district'] ?? json['neighborhood'] ?? json['quartier'])?.toString(),
+        street: (json['street'] ?? json['address'] ?? json['formatted_address'] ?? json['adresse'])?.toString(),
+        latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : (json['lat'] != null ? (json['lat'] as num).toDouble() : null),
+        longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : (json['lng'] != null ? (json['lng'] as num).toDouble() : null),
       );
 
   Address copyWith({

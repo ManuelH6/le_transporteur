@@ -3,6 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 import 'package:livreur_le_transporteur/pages/deliveries/detail_livraison_page.dart';
+import 'package:livreur_le_transporteur/pages/orders/order_details_page.dart';
+import 'package:shared_le_transporteur/api/v1/order_api.dart';
+import 'package:shared_le_transporteur/api/v1/user_api.dart';
+import 'package:shared_le_transporteur/models/commande.dart';
+import 'package:intl/intl.dart';
 
 class MesLivraisonsPage extends StatefulWidget {
   const MesLivraisonsPage({super.key});
@@ -11,281 +16,554 @@ class MesLivraisonsPage extends StatefulWidget {
   State<MesLivraisonsPage> createState() => _MesLivraisonsPageState();
 }
 
-class _MesLivraisonsPageState extends State<MesLivraisonsPage> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _MesLivraisonsPageState extends State<MesLivraisonsPage> {
+  List<Commande> _allOrders = [];
+  bool _isLoading = true;
+  String? _error;
+
+  // Filtres
+  String _searchQuery = "";
+  String _selectedQuickFilter = "Tout";
+  final List<String> _filters = ["Tout", "En cours", "En attente", "Terminées", "Annulées"];
+  DateTime? _filterDate;
+  RangeValues _priceRange = const RangeValues(0, 50000);
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final user = await UserApi().getMe();
+      final orders = await OrderApi().getOrdersByCourier(user.id);
+      if (mounted) {
+        setState(() {
+          _allOrders = orders;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  List<Commande> get _filteredOrders {
+    return _allOrders.where((o) {
+      final s = o.status.toLowerCase();
+      
+      // Filtre rapide par statut
+      if (_selectedQuickFilter != "Tout") {
+        if (_selectedQuickFilter == "En cours") {
+          if (!(s == 'en_livraison' || s == 'en_cours' || s == 'processing' || s == 'ongoing' || s == 'started')) return false;
+        } else if (_selectedQuickFilter == "En attente") {
+          if (!(s == 'assigned' || s == 'assignee' || s == 'accepted' || s == 'accepté' || s == 'prix_valide')) return false;
+        } else if (_selectedQuickFilter == "Terminées") {
+          if (!(s == 'livree' || s == 'livré' || s == 'delivered' || s == 'completed' || s == 'terminee' || s == 'terminée')) return false;
+        } else if (_selectedQuickFilter == "Annulées") {
+          if (!(s == 'annulee_par_livreur' || s == 'annulee_par_client' || s == 'annulé' || s == 'cancelled' || s == 'echec')) return false;
+        }
+      }
+
+      // Recherche manuelle
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery.toLowerCase();
+        final desc = o.description.toLowerCase();
+        final id = o.id.toLowerCase();
+        if (!desc.contains(query) && !id.contains(query)) return false;
+      }
+
+      // Date
+      if (_filterDate != null) {
+        if (!DateUtils.isSameDay(o.dateCreation, _filterDate)) return false;
+      }
+
+      // Prix
+      final price = (o.propositionLivreur ?? o.finalPrice ?? o.estimatedPrice ?? 0);
+      if (price < _priceRange.start || price > _priceRange.end) return false;
+
+      return true;
+    }).toList();
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: TabBarView(
-        controller: _tabController,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      body: Column(
         children: [
-          _buildDeliveryList("En cours"),
-          _buildDeliveryList("En attente"),
-          _buildDeliveryList("Terminées"),
-          _buildDeliveryList("Annulées"),
+          _buildFilterBar(isDark),
+          Expanded(
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+                ? Center(child: Text("Erreur: $_error", style: GoogleFonts.poppins(color: isDark ? AppColors.darkText : AppColors.text)))
+                : _filteredOrders.isEmpty
+                  ? RefreshIndicator(
+                      onRefresh: _loadOrders,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: 400.h,
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.inbox_outlined, size: 60.sp, color: isDark ? Colors.grey[800] : Colors.grey[300]),
+                              SizedBox(height: 16.h),
+                              Text(
+                                _searchQuery.isNotEmpty || _selectedQuickFilter != "Tout" || _filterDate != null
+                                    ? "Aucun résultat trouvé"
+                                    : "Aucune livraison",
+                                style: GoogleFonts.poppins(fontSize: 16.sp, color: isDark ? Colors.grey[600] : Colors.grey),
+                              ),
+                              if (_searchQuery.isNotEmpty || _selectedQuickFilter != "Tout" || _filterDate != null)
+                                TextButton(
+                                  onPressed: () => setState(() {
+                                    _searchQuery = "";
+                                    _searchController.clear();
+                                    _selectedQuickFilter = "Tout";
+                                    _filterDate = null;
+                                    _priceRange = const RangeValues(0, 50000);
+                                  }),
+                                  child: const Text("Effacer les filtres"),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadOrders,
+                      child: ListView.builder(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                        itemCount: _filteredOrders.length,
+                        itemBuilder: (context, index) {
+                          return _buildDeliveryCard(_filteredOrders[index]);
+                        },
+                      ),
+                    ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDeliveryList(String status) {
-    // Mock Data based on status
-    final List<Map<String, dynamic>> deliveries = _getMockDeliveries(status);
-
-    if (deliveries.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox_outlined, size: 60.sp, color: Colors.grey[300]),
-            SizedBox(height: 16.h),
-            Text(
-              "Aucune livraison $status",
-              style: GoogleFonts.poppins(fontSize: 16.sp, color: Colors.grey),
+  Widget _buildFilterBar(bool isDark) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 45.h,
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.grey[900] : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                    decoration: InputDecoration(
+                      hintText: "N° commande, description...",
+                      hintStyle: GoogleFonts.poppins(fontSize: 13.sp, color: Colors.grey),
+                      prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10.h),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              GestureDetector(
+                onTap: _showFilterSheet,
+                child: Container(
+                  height: 45.h,
+                  width: 45.h,
+                  decoration: BoxDecoration(
+                    color: (_filterDate != null || _priceRange.start > 0 || _priceRange.end < 50000) ? AppColors.primary : (isDark ? Colors.grey[900] : Colors.grey[100]),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Icon(
+                    Icons.tune,
+                    color: (_filterDate != null || _priceRange.start > 0 || _priceRange.end < 50000) ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
+                    size: 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _filters.map((filter) {
+                final isSelected = _selectedQuickFilter == filter;
+                return Padding(
+                  padding: EdgeInsets.only(right: 8.w),
+                  child: ChoiceChip(
+                    label: Text(filter),
+                    selected: isSelected,
+                    onSelected: (val) {
+                      if (val) setState(() => _selectedQuickFilter = filter);
+                    },
+                    selectedColor: AppColors.primary,
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 12.sp,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                    ),
+                    backgroundColor: isDark ? Colors.grey[900] : Colors.grey[100],
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+                  ),
+                );
+              }).toList(),
             ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-      itemCount: deliveries.length,
-      itemBuilder: (context, index) {
-        return _buildDeliveryCard(deliveries[index], status);
-      },
+          ),
+        ],
+      ),
     );
   }
 
-  List<Map<String, dynamic>> _getMockDeliveries(String status) {
-    switch (status) {
-      case "En cours":
-        return [
-          {
-            "id": "FFPPOL636",
-            "date": "15:30",
-            "description": "Titre de la description",
-            "progress": 0.35,
-          }
-        ];
-      case "En attente":
-        return [
-           {
-            "id": "FFPPOL700",
-            "date": "15:30",
-            "description": "Titre de la description",
-          },
-          {
-            "id": "FFPPOL701",
-            "date": "16:00",
-            "description": "Titre de la description",
-          }
-        ];
-      case "Terminées":
-        return [
-           {
-            "id": "XCSKF1545",
-            "date": "Mar 20",
-            "description": "Titre de la description",
-            "status": "Livré"
-          }
-        ];
-      case "Annulées":
-        return [
-           {
-            "id": "DGKRMF5241",
-            "date": "Jeu 22",
-            "description": "Titre de la description",
-            "status": "Annulé"
-          }
-        ];
-      default:
-        return [];
-    }
-  }
-
-  Widget _buildDeliveryCard(Map<String, dynamic> data, String status) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DetailLivraisonPage(livraisonId: data['id'])),
-        );
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: 16.h),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+  void _showFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          
+          return Container(
+            padding: EdgeInsets.fromLTRB(24.w, 24.h, 24.w, 40.h),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(25.r)),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon Circle
-                Container(
-                  width: 48.w,
-                  height: 48.w,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF5722), // Orange/Red color
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.inventory_2_outlined, color: Colors.white, size: 24.sp),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Filtres avancés", style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.text)),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _filterDate = null;
+                          _priceRange = const RangeValues(0, 50000);
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Réinitialiser"),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 12.w),
+                SizedBox(height: 24.h),
                 
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Text("Date de livraison", style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14.sp, color: isDark ? AppColors.darkText : AppColors.text)),
+                SizedBox(height: 12.h),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _filterDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setModalState(() => _filterDate = picked);
+                      setState(() => _filterDate = picked);
+                    }
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_month, color: AppColors.primary, size: 20),
+                        SizedBox(width: 12.w),
+                        Text(
+                          _filterDate == null ? "Toutes les dates" : DateFormat('dd MMMM yyyy', 'fr_FR').format(_filterDate!),
+                          style: GoogleFonts.poppins(color: isDark ? AppColors.darkText : AppColors.text),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 24.h),
+
+                Text(
+                  "Montant de la course (FCFA)", 
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14.sp, color: isDark ? AppColors.darkText : AppColors.text)
+                ),
+                SizedBox(height: 8.h),
+                RangeSlider(
+                  values: _priceRange,
+                  min: 0,
+                  max: 50000,
+                  divisions: 50,
+                  activeColor: AppColors.primary,
+                  labels: RangeLabels(
+                    "${_priceRange.start.toInt()} F",
+                    "${_priceRange.end.toInt()} F",
+                  ),
+                  onChanged: (values) {
+                    setModalState(() => _priceRange = values);
+                    setState(() => _priceRange = values);
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("0 F", style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)),
+                    Text("50 000 F+", style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)),
+                  ],
+                ),
+                
+                SizedBox(height: 32.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text("Appliquer", style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildDeliveryCard(Commande commande) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isAchat = commande.serviceType.toLowerCase() == 'achat';
+    final statusColor = _getStatusColor(commande);
+    
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderDetailsPage(commande: commande),
+            ),
+          ).then((_) => _loadOrders());
+        },
+        borderRadius: BorderRadius.circular(20.r),
+        child: Padding(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            "Livraison ${data['id']}",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text,
-                            ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: isAchat ? Colors.blue.withOpacity(0.1) : AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Text(
+                          isAchat ? "ACHAT" : "LIVRAISON",
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w800,
+                            color: isAchat ? Colors.blue : AppColors.primary,
+                            letterSpacing: 0.5,
                           ),
-                          Text(
-                            data['date'],
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        status == "Terminées" ? "Livré" : (status == "Annulées" ? "Annulé" : "Livraison ${status.toLowerCase()}"),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
                         ),
                       ),
-                      SizedBox(height: 4.h),
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Text(
+                          commande.getDisplayStatus().toUpperCase(),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
-                        data['description'],
+                        "${(commande.propositionLivreur ?? commande.finalPrice ?? commande.estimatedPrice ?? 0).toInt()} F",
                         style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.text,
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.green,
+                        ),
+                      ),
+                      Text(
+                        "Gain",
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.sp,
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      "${commande.getDisplayLocation(true)} ➔ ${commande.getDisplayLocation(false)}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? AppColors.darkText : AppColors.text,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (isAchat) ...[
+                SizedBox(height: 12.h),
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Avance de fonds requise",
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange[800],
+                              ),
+                            ),
+                            Text(
+                              "Prévoir environ ${(commande.weight != null ? (commande.weight! * 1000).toInt() : 3000)} F",
+                              style: GoogleFonts.poppins(
+                                fontSize: 11.sp,
+                                color: Colors.orange[700],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
+              ] else ...[
+                 SizedBox(height: 8.h),
+                 Text(
+                   commande.description,
+                   style: GoogleFonts.poppins(
+                     fontSize: 13.sp, 
+                     color: isDark ? Colors.grey[400] : Colors.grey[600],
+                   ),
+                   maxLines: 2,
+                   overflow: TextOverflow.ellipsis,
+                 ),
               ],
-            ),
-            
-            if (status == "En cours") ...[
               SizedBox(height: 16.h),
-              LinearProgressIndicator(
-                value: data['progress'],
-                backgroundColor: const Color(0xFFFFF0EB),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF5722)),
-                minHeight: 4.h,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-               SizedBox(height: 8.h),
-               Text(
-                "En cours ${(data['progress'] * 100).toInt()}%",
-                style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[600]),
-               ),
-            ],
-
-            if (status == "En attente") ...[
-              SizedBox(height: 16.h),
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Accept Logic
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5722),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 10.h),
-                    elevation: 0,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    commande.getDisplayTime(),
+                    style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[500]),
                   ),
-                  child: Text(
-                    "Accepter",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                  Icon(Icons.chevron_right, color: Colors.grey[400]),
+                ],
               ),
             ],
-            
-            if (status == "Terminées") ...[
-               SizedBox(height: 16.h),
-               Container(
-                 height: 4.h,
-                 width: double.infinity,
-                 decoration: BoxDecoration(
-                   color: const Color(0xFFFF5722),
-                   borderRadius: BorderRadius.circular(2.r),
-                 ),
-               ),
-               SizedBox(height: 8.h),
-               Text(
-                "Livrée 100%",
-                style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[600]),
-               ),
-            ],
-             if (status == "Annulées") ...[
-               SizedBox(height: 16.h),
-               Container(
-                 height: 4.h,
-                 width: double.infinity,
-                 decoration: BoxDecoration(
-                   color: Colors.grey[300],
-                   borderRadius: BorderRadius.circular(2.r),
-                 ),
-               ),
-               SizedBox(height: 8.h),
-               Text(
-                "Annulé",
-                style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey[600]),
-               ),
-            ],
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(Commande commande) {
+    switch (commande.getStatusColorName()) {
+      case 'blue': return Colors.blue;
+      case 'orange': return Colors.orange;
+      case 'purple': return Colors.purple;
+      case 'green': return Colors.green;
+      case 'red': return Colors.red;
+      default: return Colors.grey;
+    }
   }
 }

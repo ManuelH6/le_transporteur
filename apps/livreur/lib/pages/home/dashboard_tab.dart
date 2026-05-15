@@ -360,6 +360,7 @@ class _DashboardTabState extends State<DashboardTab> {
     required String label,
     required Color color,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return LayoutBuilder(
       builder: (context, constraints) {
         final cardPadding = constraints.maxWidth * 0.08;
@@ -371,11 +372,11 @@ class _DashboardTabState extends State<DashboardTab> {
         return Container(
           padding: EdgeInsets.all(cardPadding),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(20.r),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -399,7 +400,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 style: GoogleFonts.poppins(
                   fontSize: valueSize,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.text,
+                  color: isDark ? AppColors.darkText : AppColors.text,
                 ),
               ),
               SizedBox(height: constraints.maxWidth * 0.02),
@@ -410,7 +411,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: labelSize,
-                  color: Colors.grey[600],
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
                   height: 1.2,
                 ),
               ),
@@ -422,6 +423,7 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildTransactionHistoryCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -434,12 +436,12 @@ class _DashboardTabState extends State<DashboardTab> {
         width: double.infinity,
         padding: EdgeInsets.all(20.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(20.r),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5),
+          border: Border.all(color: AppColors.primary.withValues(alpha: isDark ? 0.2 : 0.3), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -465,7 +467,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     style: GoogleFonts.poppins(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.text,
+                      color: isDark ? AppColors.darkText : AppColors.text,
                     ),
                   ),
                   SizedBox(height: 4.h),
@@ -473,7 +475,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     "Consultez tous vos paiements",
                     style: GoogleFonts.poppins(
                       fontSize: 13.sp,
-                      color: Colors.grey[600],
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                     ),
                   ),
                 ],
@@ -487,12 +489,14 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildDetailedStats(num total, num successRate) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
-        color: const Color(0xFF2D2D2D),
+        color: isDark ? AppColors.darkSurface : const Color(0xFF2D2D2D),
         borderRadius: BorderRadius.circular(24.r),
+        border: isDark ? Border.all(color: Colors.white10) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

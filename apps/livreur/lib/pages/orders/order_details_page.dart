@@ -3,13 +3,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_le_transporteur/api/v1/order_api.dart';
 import 'package:shared_le_transporteur/core/theme/app_theme.dart';
-
 import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/models/commande.dart';
 import 'package:shared_le_transporteur/utils/pricing_logic.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_le_transporteur/services/notification_service.dart';
+import 'package:shared_le_transporteur/core/widgets/swipe_button.dart';
+import 'package:shared_le_transporteur/core/widgets/skeleton_loader.dart';
+import 'package:flutter/services.dart';
 
 class OrderDetailsPage extends StatefulWidget {
   final Commande commande;
@@ -20,7 +22,6 @@ class OrderDetailsPage extends StatefulWidget {
     required this.commande,
     this.isAvailableMode = false,
   });
-
 
   @override
   State<OrderDetailsPage> createState() => _OrderDetailsPageState();
@@ -42,6 +43,264 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     _fetchNegotiation();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final isAchat = _commande.type == 'achat';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      appBar: AppBar(
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? AppColors.darkText : AppColors.text, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Détails de la commande",
+          style: GoogleFonts.poppins(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.w600,
+            color: isDark ? AppColors.darkText : AppColors.text,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          if (_isLoading)
+            const LinearProgressIndicator(
+              backgroundColor: Colors.transparent,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          Expanded(
+            child: AbsorbPointer(
+              absorbing: _isLoading,
+              child: _isLoading && _commande.description.isEmpty 
+                  ? _buildLoadingState()
+                  : SingleChildScrollView(
+                      padding: EdgeInsets.all(16.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Status Badge
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(_commande).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                            child: Text(
+                              _commande.getDisplayStatus(),
+                              style: GoogleFonts.poppins(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: _getStatusColor(_commande),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 24.h),
+
+                          // Description
+                          Text(
+                            "Description",
+                            style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: isDark ? AppColors.darkText : AppColors.text),
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            _commande.description,
+                            style: GoogleFonts.poppins(fontSize: 14.sp, color: isDark ? Colors.grey[400] : Colors.grey[800]),
+                          ),
+                          if (_commande.isScheduled && _commande.scheduledAt != null) ...[
+                            SizedBox(height: 24.h),
+                            Text(
+                              "Date et Heure de Livraison",
+                              style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600, color: isDark ? AppColors.darkText : AppColors.text),
+                            ),
+                            SizedBox(height: 8.h),
+                            Container(
+                              padding: EdgeInsets.all(12.w),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.access_time_outlined, color: Colors.orange[800], size: 20.sp),
+                                  SizedBox(width: 12.w),
+                                  Text(
+                                    DateFormat('EEEE dd MMMM yyyy à HH:mm', 'fr_FR').format(_commande.scheduledAt!.toLocal()),
+                                    style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.orange[900], fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 24.h),
+
+                          // Addresses
+                          _buildAddressSection(
+                            title: isAchat ? "Lieu d'achat" : "Lieu de récupération",
+                            address: _commande.pickup.adresse,
+                            phone: _commande.pickupPhone,
+                            icon: Icons.trip_origin,
+                            color: AppColors.primary,
+                          ),
+                          SizedBox(height: 16.h),
+                          _buildAddressSection(
+                            title: "Lieu de livraison",
+                            address: _commande.livraison.adresse,
+                            phone: _commande.livraisonPhone,
+                            icon: Icons.location_on,
+                            color: AppColors.secondary,
+                          ),
+                          SizedBox(height: 24.h),
+
+                          // Pricing
+                          _buildPricingCard(),
+                          
+                          SizedBox(height: 32.h),
+                          _buildActionSection(),
+                        ],
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPricingCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Prix de la course",
+            style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            "${(_commande.finalPrice ?? _commande.estimatedPrice ?? 0).toInt()} FCFA",
+            style: GoogleFonts.poppins(
+              fontSize: 24.sp,
+              fontWeight: FontWeight.bold,
+              color: isDark ? AppColors.darkText : AppColors.text,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        children: [
+          SkeletonLoader(width: double.infinity, height: 100.h),
+          SizedBox(height: 24.h),
+          SkeletonLoader(width: double.infinity, height: 200.h),
+          SizedBox(height: 24.h),
+          SkeletonLoader(width: double.infinity, height: 150.h),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionSection() {
+    final status = _commande.status.toLowerCase();
+    
+    // Ongoing Phase - Use Swipe to Finish
+    if (status == 'en_cours' || status == 'en_livraison' || status == 'ongoing' || status == 'started' || status == 'picked_up' || status == 'in_transit') {
+      return SwipeButton(
+        text: "Glisser pour marquer comme Livré",
+        isLoading: _isLoading,
+        onSwipe: () {
+          HapticFeedback.heavyImpact();
+          _validerEtape('livree');
+        },
+        color: Colors.green,
+        icon: Icons.check_circle_outline,
+      );
+    }
+
+    // Ready to Start - Use Swipe to Start
+    if (status == 'accepted' || status == 'assigned' || status == 'assignee' || status == 'processing' || status == 'accepté' || _commande.statut == 'Prix confirmé') {
+      final needsNegotiation = _commande.negotiationStatus != 'confirmed' && _commande.statut != 'Prix confirmé';
+      
+      return Column(
+        children: [
+          if (needsNegotiation) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _showProposePriceDialog,
+                icon: const Icon(Icons.edit_note, color: AppColors.primary),
+                label: Text(
+                  _commande.propositionLivreur != null ? "Modifier ma proposition" : "Proposer mon prix",
+                  style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.primary),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+          ],
+          SwipeButton(
+            text: "Glisser pour démarrer la course",
+            isLoading: _isLoading,
+            onSwipe: () {
+              HapticFeedback.heavyImpact();
+              _validerEtape('en_livraison');
+            },
+            color: AppColors.primary,
+            icon: Icons.delivery_dining,
+          ),
+        ],
+      );
+    }
+
+    // Available Mode - Use Swipe to Accept
+    if (widget.isAvailableMode) {
+      return SwipeButton(
+        text: "Glisser pour accepter",
+        isLoading: _isLoading,
+        onSwipe: () {
+          HapticFeedback.heavyImpact();
+          _checkTimingAndProceed("Voulez-vous accepter cette course ?", () {
+            _accepterCommande();
+          });
+        },
+        color: AppColors.primary,
+        icon: Icons.check_circle_outline,
+      );
+    }
+
+    // ... (rest of the action buttons like Accept/Propose remain the same)
+    return _buildActionButtons();
+  }
+
   Future<void> _fetchNegotiation() async {
     final neg = await OrderApi().getNegotiation(_commande.id);
     if (neg != null && mounted) {
@@ -61,10 +320,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         await orderApi.validatePrice(_commande.id);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Commande acceptée avec succès !', style: GoogleFonts.poppins()), backgroundColor: Colors.green),
+        NotificationService().showSuccessDialog(
+          title: "Commande acceptée",
+          message: "La commande est maintenant dans votre liste 'Mes courses'.",
+          onConfirm: () => Navigator.pop(context, true),
         );
-        Navigator.pop(context, true);
       }
     } catch (e) {
       String errorMessage = e.toString();
@@ -96,13 +356,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     setState(() => _isLoading = true);
     try {
       final orderApi = OrderApi();
-      if (widget.isAvailableMode) {
-        await orderApi.claimOrder(_commande.id);
-      }
+      // Removed auto-claiming here as it must be done separately now
       await orderApi.proposePrice(_commande.id, amount);
       if (mounted) {
-        NotificationService().showSuccess("Proposition envoyée au client.");
-        Navigator.pop(context, true);
+        NotificationService().showSuccessDialog(
+          title: "Proposition envoyée",
+          message: "Votre proposition de prix a été envoyée au client.",
+          onConfirm: () => Navigator.pop(context, true),
+        );
       }
     } catch (e) {
       String errorMessage = e.toString();
@@ -261,12 +522,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('WhatsApp n\'est pas installé ou ce numéro n\'est pas valide sur WhatsApp.', style: GoogleFonts.poppins()),
-            backgroundColor: Colors.red,
-          ),
-        );
+        NotificationService().showError(e);
       }
     }
   }
@@ -278,12 +534,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       await launchUrl(url);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Impossible de passer l\'appel', style: GoogleFonts.poppins()),
-            backgroundColor: Colors.red,
-          ),
-        );
+        NotificationService().showError("Impossible de passer l'appel. Veuillez vérifier les permissions de votre téléphone.");
       }
     }
   }
@@ -302,19 +553,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         if (nouvelleEtape == 'livree') {
           _showCompletionDialog();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Statut mis à jour : ${_commande.getDisplayStatus()}', style: GoogleFonts.poppins()),
-              backgroundColor: Colors.green,
-            ),
+          NotificationService().showSuccessDialog(
+            title: "Statut mis à jour",
+            message: "La course est maintenant marquée comme : ${_commande.getDisplayStatus()}",
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
+        NotificationService().showError(e);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -334,7 +581,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
+                color: Colors.green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.check_circle, color: Colors.green, size: 64.sp),
@@ -376,370 +623,67 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   }
 
 
-  @override
-  Widget build(BuildContext context) {
-    final isAchat = _commande.type == 'achat';
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.text, size: 20.sp),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          "Détails de la commande",
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.text,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Badge
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: _getStatusColor(_commande).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                _commande.getDisplayStatus(),
-                style: GoogleFonts.poppins(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: _getStatusColor(_commande),
-                ),
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // Description
-            Text(
-              "Description",
-              style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              _commande.description,
-              style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[800]),
-            ),
-            if (_commande.isScheduled && _commande.scheduledAt != null) ...[
-              SizedBox(height: 24.h),
-              Text(
-                "Date et Heure de Livraison",
-                style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8.h),
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time_outlined, color: Colors.orange[800], size: 20.sp),
-                    SizedBox(width: 12.w),
-                    Text(
-                      DateFormat('EEEE dd MMMM yyyy à HH:mm', 'fr_FR').format(_commande.scheduledAt!.toLocal()),
-                      style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.orange[900], fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-            SizedBox(height: 24.h),
-
-            // Addresses
-            _buildAddressSection(
-              title: isAchat ? "Lieu d'achat" : "Lieu de récupération",
-              address: _commande.pickup.adresse,
-              phone: _commande.pickupPhone,
-              icon: Icons.trip_origin,
-              color: AppColors.primary,
-            ),
-            SizedBox(height: 16.h),
-            _buildAddressSection(
-              title: "Lieu de livraison",
-              address: _commande.livraison.adresse,
-              phone: _commande.livraisonPhone,
-              icon: Icons.location_on,
-              color: AppColors.secondary,
-            ),
-            SizedBox(height: 24.h),
-
-            // Instructions
-            if (_commande.instructions != null && _commande.instructions!.isNotEmpty) ...[
-              Text(
-                "Instructions spéciales",
-                style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 8.h),
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.yellow.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.yellow.withValues(alpha: 0.5)),
-                ),
-                child: Text(
-                  _commande.instructions!,
-                  style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[800]),
-                ),
-              ),
-              SizedBox(height: 24.h),
-            ],
-
-            // Pricing
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_commande.negotiationStatus == 'confirmed' || 
-                      _commande.status.toLowerCase() == 'processing' || 
-                      _commande.status.toLowerCase() == 'en_cours' ||
-                      _commande.status.toLowerCase() == 'en_livraison') ...[
-                    Text(
-                      "Prix final convenu",
-                      style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "${(_commande.finalPrice ?? _commande.propositionLivreur ?? _commande.propositionClient ?? 0).toInt()} FCFA",
-                      style: GoogleFonts.poppins(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ] else ...[
-                    Text(
-                      "Prix de la course",
-                      style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
-                    ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      "${_commande.estimatedPrice?.toInt() ?? 0} FCFA",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.text,
-                      ),
-                    ),
-                    if (_commande.propositionClient != null && _commande.propositionClient! > 0) ...[
-                      Divider(height: 24.h),
-                      Text(
-                        "Proposition du client",
-                        style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "${_commande.propositionClient!.toInt()} FCFA",
-                        style: GoogleFonts.poppins(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                    if (_commande.propositionLivreur != null) ...[
-                      Divider(height: 24.h),
-                      Text(
-                        "Ma proposition",
-                        style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey[600]),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        "${_commande.propositionLivreur!.toInt()} FCFA",
-                        style: GoogleFonts.poppins(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            ),
-            SizedBox(height: 32.h),
-
-            // Actions Section
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (widget.isAvailableMode)
-              Column(
-                children: [
-                  if (_commande.propositionClient != null && _commande.propositionClient! > 0) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          _checkTimingAndProceed("Voulez-vous quand même accepter cette course au prix proposé par le client ?", () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text('Confirmer', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-                                content: Text('Voulez-vous accepter cette course au prix proposé par le client (${_commande.propositionClient?.toInt() ?? 0} FCFA) ?', style: GoogleFonts.poppins()),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                      _accepterCommande();
-                                    },
-                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                                    child: Text('Accepter', style: GoogleFonts.poppins(color: Colors.white)),
-                                  ),
-                                ],
-                              ),
-                            );
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.symmetric(vertical: 16.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        ),
-                        child: Text(
-                          "Valider le prix client",
-                          style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 12.h),
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => _checkTimingAndProceed("Voulez-vous quand même faire une proposition pour cette course ?", _showProposePriceDialog),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        side: const BorderSide(color: AppColors.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                      child: Text(
-                        "Proposer mon prix",
-                        style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: AppColors.primary),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else if (_commande.negotiationStatus == 'rejected')
-              Column(
-                children: [
-                  Container(
-                    padding: EdgeInsets.all(16.w),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.warning, color: Colors.red),
-                        SizedBox(width: 12.w),
-                        Expanded(
-                          child: Text(
-                            "Le client a rejeté votre proposition. En cas de conflit, contactez un administrateur.",
-                            style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.red[700]),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 16.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _contacterAdmin,
-                      icon: const Icon(Icons.support_agent, color: Colors.white),
-                      label: Text(
-                        "Contacter un administrateur",
-                        style: GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(vertical: 16.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            else if (_isReserved) ...[
-              _buildContactSection(),
-              SizedBox(height: 24.h),
-              _buildActionButtons(),
-            ],
-            SizedBox(height: 32.h),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildActionButtons() {
     final status = _commande.status.toLowerCase();
     
     // 1. Negotiation Phase
-    if (_commande.negotiationStatus == 'pending_client_approval') {
-      return Row(
+    // 1. Negotiation Phase (after claiming)
+    if (_commande.negotiationStatus == 'pending_client_approval' || 
+        status == 'assigned' || status == 'assignee' || status == 'accepted' || status == 'accepté') {
+      return Column(
         children: [
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _accepterCommande(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-              ),
-              child: Text(
-                "Confirmer prix",
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white),
-              ),
-            ),
-          ),
-          SizedBox(width: 16.w),
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _showProposePriceDialog,
-              style: OutlinedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.h),
-                side: const BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-              ),
-              child: Text(
-                "Proposer prix",
-                style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.primary),
+          if (_commande.propositionClient != null && _commande.propositionClient! > 0 && _commande.negotiationStatus != 'confirmed') ...[
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _accepterCommande(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: EdgeInsets.symmetric(vertical: 16.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: Text(
+                  "Valider le prix client (${_commande.propositionClient!.toInt()} FCFA)",
+                  style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white),
+                ),
               ),
             ),
+            SizedBox(height: 12.h),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _showProposePriceDialog,
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                  ),
+                  child: Text(
+                    _commande.propositionLivreur != null ? "Modifier prix" : "Proposer prix",
+                    style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.primary),
+                  ),
+                ),
+              ),
+              if (status == 'accepted' || status == 'assigned' || status == 'assignee' || status == 'accepté' || _commande.statut == 'Prix confirmé') ...[
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _validerEtape('en_livraison'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: EdgeInsets.symmetric(vertical: 16.h),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    ),
+                    child: Text(
+                      "Démarrer",
+                      style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       );
@@ -813,7 +757,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       return Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
+          color: Colors.green.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Row(
@@ -869,7 +813,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             onPressed: () => _appelerDirect(_commande.pickupPhone),
             icon: const Icon(Icons.phone, color: AppColors.primary),
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+              backgroundColor: AppColors.primary.withOpacity(0.1),
             ),
           ),
           SizedBox(width: 8.w),
@@ -881,7 +825,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               height: 24.sp,
             ),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.green.withValues(alpha: 0.1),
+              backgroundColor: Colors.green.withOpacity(0.1),
             ),
           ),
         ],
@@ -903,7 +847,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         Container(
           padding: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 20.sp),

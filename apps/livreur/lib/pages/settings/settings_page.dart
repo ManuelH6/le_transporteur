@@ -11,9 +11,11 @@ import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart
 import 'package:shared_le_transporteur/screens/settings/notifications_settings_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/user_manual_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/legal_documents_screen.dart';
+import 'package:shared_le_transporteur/screens/info/about_screen.dart';
 import 'package:shared_le_transporteur/services/report_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:livreur_le_transporteur/pages/settings/security_settings_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -58,8 +60,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF0EB),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFFFF0EB),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
         child: Column(
@@ -147,12 +151,18 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+
   Widget _buildSecuritySection() {
     return _buildSection(
       title: "Sécurité & Confidentialité",
       icon: Icons.security,
       children: [
-        // 2FA and PIN lock commented out
+        _buildNavigationTile(
+          icon: Icons.lock_outline,
+          title: "Verrouillage de l'application",
+          subtitle: "Code PIN et Biométrie",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SecuritySettingsPage())),
+        ),
         _buildSwitchTile(
           icon: Icons.location_on,
           title: "Données de localisation",
@@ -168,12 +178,6 @@ class _SettingsPageState extends State<SettingsPage> {
                await Geolocator.openLocationSettings();
             }
           },
-        ),
-        _buildNavigationTile(
-          icon: Icons.history,
-          title: "Historique d'activité",
-          subtitle: "Bientôt disponible",
-          onTap: null,
           showDivider: false,
         ),
       ],
@@ -198,8 +202,14 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         _buildNavigationTile(
           icon: Icons.info_outline,
+          title: "À propos du Transporteur",
+          subtitle: "Histoire, services et présence",
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen())),
+        ),
+        _buildNavigationTile(
+          icon: Icons.numbers_rounded,
           title: "Version de l'app",
-          subtitle: "v1.0.0",
+          subtitle: "v1.1.0",
           onTap: null,
           showDivider: false,
         ),
@@ -228,9 +238,10 @@ class _SettingsPageState extends State<SettingsPage> {
     required IconData icon,
     required List<Widget> children,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
@@ -239,6 +250,7 @@ class _SettingsPageState extends State<SettingsPage> {
             offset: const Offset(0, 5),
           ),
         ],
+        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.transparent),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,7 +266,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   style: GoogleFonts.poppins(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.text,
+                    color: isDark ? AppColors.darkText : AppColors.text,
                   ),
                 ),
               ],
@@ -273,6 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
     VoidCallback? onTap,
     bool showDivider = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bool isDisabled = onTap == null && subtitle == "Bientôt disponible";
     return Column(
       children: [
@@ -295,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           style: GoogleFonts.poppins(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.text,
+                            color: isDark ? AppColors.darkText : AppColors.text,
                           ),
                         ),
                         if (subtitle != null) ...[
@@ -321,7 +334,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (showDivider)
           Padding(
             padding: EdgeInsets.only(left: 58.w),
-            child: Divider(color: Colors.grey[200], height: 1, thickness: 1),
+            child: Divider(color: isDark ? Colors.grey[800] : Colors.grey[200], height: 1, thickness: 1),
           ),
       ],
     );
@@ -335,13 +348,14 @@ class _SettingsPageState extends State<SettingsPage> {
     required ValueChanged<bool> onChanged,
     bool showDivider = true,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
           child: Row(
             children: [
-              Icon(icon, color: Colors.grey[600], size: 22.sp),
+              Icon(icon, color: isDark ? Colors.grey[400] : Colors.grey[600], size: 22.sp),
               SizedBox(width: 16.w),
               Expanded(
                 child: Column(
@@ -352,7 +366,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       style: GoogleFonts.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.text,
+                        color: isDark ? AppColors.darkText : AppColors.text,
                       ),
                     ),
                     if (subtitle != null) ...[
@@ -391,6 +405,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16.r),
@@ -398,7 +413,7 @@ class _SettingsPageState extends State<SettingsPage> {
         width: double.infinity,
         padding: EdgeInsets.symmetric(vertical: 16.h),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.darkSurface : Colors.white,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
         ),

@@ -11,6 +11,8 @@ class NotificationApi {
     if (user == null) throw Exception("Session expirée");
 
     final response = await _client.get('/api/v1/notifications');
+    // ignore: avoid_print
+    //print("DEBUG [NotificationApi] Raw Response: ${response.body}");
     final data = jsonDecode(response.body);
     if (data is List) {
       return data.map((e) => UserNotification.fromJson(e)).toList();

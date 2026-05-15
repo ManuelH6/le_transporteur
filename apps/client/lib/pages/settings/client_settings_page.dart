@@ -13,6 +13,7 @@ import 'package:shared_le_transporteur/screens/settings/notifications_settings_s
 import 'package:shared_le_transporteur/screens/settings/user_manual_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/edit_profile_screen.dart';
 import 'package:shared_le_transporteur/screens/settings/legal_documents_screen.dart';
+import 'package:shared_le_transporteur/screens/info/about_screen.dart';
 import 'package:shared_le_transporteur/services/report_service.dart';
 
 class ClientSettingsPage extends StatefulWidget {
@@ -26,15 +27,23 @@ class _ClientSettingsPageState extends State<ClientSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? AppColors.darkBackground : Colors.grey[50],
       appBar: AppBar(
-        title: Text("Paramètres", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(
+          "Paramètres", 
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: isDark ? AppColors.darkText : AppColors.text,
+          )
+        ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.menu, color: AppColors.text, size: 28.sp),
+          icon: Icon(Icons.menu, color: isDark ? Colors.white : AppColors.text, size: 28.sp),
           onPressed: () {
             Scaffold.of(context).openDrawer();
           },
@@ -45,7 +54,7 @@ class _ClientSettingsPageState extends State<ClientSettingsPage> {
           children: [
             // Profile Header
             Container(
-              color: Colors.white,
+              color: isDark ? AppColors.darkSurface : Colors.white,
               padding: EdgeInsets.symmetric(vertical: 24.h),
               child: FutureBuilder<User?>(
 
@@ -63,9 +72,9 @@ class _ClientSettingsPageState extends State<ClientSettingsPage> {
                           child: const Icon(Icons.person, size: 50, color: AppColors.primary),
                         ),
                         SizedBox(height: 12.h),
-                        Text(name, style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                        Text(name, style: GoogleFonts.poppins(fontSize: 18.sp, fontWeight: FontWeight.bold, color: isDark ? AppColors.darkText : AppColors.text)),
                         if (phone.isNotEmpty) 
-                          Text(phone, style: GoogleFonts.poppins(fontSize: 14.sp, color: Colors.grey)),
+                          Text(phone, style: GoogleFonts.poppins(fontSize: 14.sp, color: isDark ? Colors.grey[400] : Colors.grey)),
                         SizedBox(height: 8.h),
                         OutlinedButton(
                           onPressed: () async {
@@ -136,7 +145,13 @@ class _ClientSettingsPageState extends State<ClientSettingsPage> {
                 "Mentions légales et confidentialité",
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => LegalDocumentsScreen())),
               ),
-              _buildSettingsItem(Icons.info_outline, "À propos", "Version 1.0.0", onTap: () {}),
+              _buildSettingsItem(
+                Icons.info_outline, 
+                "À propos du Transporteur", 
+                "Histoire, services et présence", 
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AboutScreen())),
+              ),
+              _buildSettingsItem(Icons.numbers_rounded, "Version de l'app", "Version 1.1.0", onTap: () {}),
             ]),
             
             SizedBox(height: 32.h),
@@ -167,18 +182,29 @@ class _ClientSettingsPageState extends State<ClientSettingsPage> {
   }
 
   Widget _buildSettingsGroup(List<Widget> items) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.white,
+      color: isDark ? AppColors.darkSurface : Colors.white,
       child: Column(children: items),
     );
   }
 
   Widget _buildSettingsItem(IconData icon, String title, String? subtitle, {required VoidCallback onTap}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      leading: Icon(icon, color: Colors.grey[700]),
-      title: Text(title, style: GoogleFonts.poppins(fontSize: 14.sp, fontWeight: FontWeight.w500)),
-      subtitle: subtitle != null ? Text(subtitle, style: GoogleFonts.poppins(fontSize: 12.sp, color: Colors.grey)) : null,
-      trailing: const Icon(Icons.chevron_right, size: 20, color: Colors.grey),
+      leading: Icon(icon, color: isDark ? Colors.grey[400] : Colors.grey[700]),
+      title: Text(
+        title, 
+        style: GoogleFonts.poppins(
+          fontSize: 14.sp, 
+          fontWeight: FontWeight.w500,
+          color: isDark ? AppColors.darkText : AppColors.text,
+        )
+      ),
+      subtitle: subtitle != null 
+          ? Text(subtitle, style: GoogleFonts.poppins(fontSize: 12.sp, color: isDark ? Colors.grey[500] : Colors.grey)) 
+          : null,
+      trailing: Icon(Icons.chevron_right, size: 20, color: isDark ? Colors.grey[600] : Colors.grey),
       onTap: onTap,
     );
   }

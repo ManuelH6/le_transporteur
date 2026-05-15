@@ -59,6 +59,27 @@ class NotificationService {
           message = apiError?.message ?? "Email ou mot de passe incorrect.";
         }
         details = null; // Hide technical details for simple login errors
+      } else if (error.statusCode == 400 || error.statusCode == 422) {
+        final apiError = error.errorResponse;
+        title = "Erreur de validation";
+        
+        if (apiError != null) {
+          String msg = apiError.message.toLowerCase();
+          if (msg.contains('bad formatted')) {
+            message = "Veuillez remplir tous les champs obligatoires marqués d'une astérisque (*).";
+          } else if (msg.contains('servicetype') || msg.contains('service type')) {
+            message = "Le type de service choisi est invalide. Veuillez contacter le support.";
+            title = "Service invalide";
+          } else if (msg.contains('invalid value')) {
+            message = "Une des valeurs saisies n'est pas reconnue par le système.";
+          } else {
+            message = apiError.message;
+          }
+          details = apiError.toString();
+        } else {
+          message = "Le serveur a rejeté la demande. Vérifiez les informations saisies.";
+          details = error.body;
+        }
       } else {
         final apiError = error.errorResponse;
         if (apiError != null) {

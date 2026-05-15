@@ -8,6 +8,7 @@ import 'package:shared_le_transporteur/core/theme/app_theme.dart';
 class AppTextField extends StatefulWidget {
   final TextEditingController? controller;
   final String hintText;
+  final String? labelText;
   final IconData prefixIcon;
   final Color? prefixIconColor;
   final bool isPassword;
@@ -19,11 +20,15 @@ class AppTextField extends StatefulWidget {
   final int? minLines;
   final bool readOnly;
   final bool enabled;
+  final bool isRequired;
+  final VoidCallback? onTap;
+  final Widget? suffixIcon;
 
   const AppTextField({
     super.key,
     this.controller,
     required this.hintText,
+    this.labelText,
     required this.prefixIcon,
     this.prefixIconColor,
     this.isPassword = false,
@@ -35,6 +40,9 @@ class AppTextField extends StatefulWidget {
     this.minLines,
     this.readOnly = false,
     this.enabled = true,
+    this.isRequired = false,
+    this.onTap,
+    this.suffixIcon,
   });
 
 
@@ -47,6 +55,8 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TextFormField(
       controller: widget.controller,
       focusNode: widget.focusNode,
@@ -57,34 +67,49 @@ class _AppTextFieldState extends State<AppTextField> {
       minLines: widget.minLines,
       readOnly: widget.readOnly,
       enabled: widget.enabled,
+      onTap: widget.onTap,
       validator: widget.validator ??
           (value) {
-            if (value == null || value.isEmpty) {
+            if (widget.isRequired && (value == null || value.isEmpty)) {
               return 'Ce champ ne peut pas être vide';
             }
             if (widget.keyboardType == TextInputType.emailAddress &&
+                value != null && value.isNotEmpty &&
                 !RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
               return 'Veuillez saisir une adresse e-mail valide';
             }
             return null;
           },
       decoration: InputDecoration(
-        hintText: widget.hintText,
+        labelText: widget.labelText != null 
+          ? (widget.isRequired ? "${widget.labelText} *" : widget.labelText) 
+          : null,
+        labelStyle: GoogleFonts.poppins(
+          fontSize: 14.sp,
+          color: isDark ? Colors.grey[400] : Colors.grey[800], // Darker grey for better visibility
+          fontWeight: FontWeight.w600,
+        ),
+        floatingLabelStyle: GoogleFonts.poppins(
+          fontSize: 14.sp,
+          color: AppColors.primary,
+          fontWeight: FontWeight.bold,
+        ),
+        hintText: widget.isRequired ? "${widget.hintText} *" : widget.hintText,
         hintStyle: GoogleFonts.poppins(
           fontSize: 14.sp,
-          color: Colors.grey[400],
+          color: isDark ? Colors.grey[600] : Colors.grey[500],
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(
           widget.prefixIcon, 
-          color: widget.prefixIconColor ?? Colors.grey[400], 
+          color: widget.prefixIconColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]), 
           size: 20.sp
         ),
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
                   _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.grey[400],
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
                   size: 20.sp,
                 ),
                 onPressed: () {
@@ -93,17 +118,17 @@ class _AppTextFieldState extends State<AppTextField> {
                   });
                 },
               )
-            : null,
+            : widget.suffixIcon,
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDark ? AppColors.darkSurface : Colors.white,
         contentPadding: EdgeInsets.symmetric(vertical: 18.h, horizontal: 16.w),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: Colors.grey[200]!, width: 1),
+          borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: Colors.grey[200]!, width: 1),
+          borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.r),
@@ -121,7 +146,7 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
       style: GoogleFonts.poppins(
         fontSize: 14.sp,
-        color: AppColors.text,
+        color: isDark ? AppColors.darkText : AppColors.text,
         fontWeight: FontWeight.w500,
       ),
     );

@@ -7,20 +7,35 @@ import 'package:shared_le_transporteur/core/widgets/app_image.dart';
 import 'package:shared_le_transporteur/core/widgets/app_text_field.dart';
 import 'package:shared_le_transporteur/core/widgets/legal_notice_widget.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   final String backgroundImage;
   final String title;
+  final String nextRoute;
+  final TextEditingController? emailController;
+  final TextEditingController? passwordController;
+  final VoidCallback? onLogin;
+  final bool isLoading;
 
   const LoginScreen({
     super.key,
     required this.backgroundImage,
     required this.title,
+    this.nextRoute = '/dashboard',
+    this.emailController,
+    this.passwordController,
+    this.onLogin,
+    this.isLoading = false,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -30,7 +45,7 @@ class LoginScreen extends StatelessWidget {
               height: 0.4.sh,
               width: double.infinity,
               child: AppImage(
-                assetPath: backgroundImage,
+                assetPath: widget.backgroundImage,
                 fit: BoxFit.cover,
               ),
             ),
@@ -44,18 +59,20 @@ class LoginScreen extends StatelessWidget {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(40.r)),
                 ),
                 child: Form(
-                  key: formKey,
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.displayMedium),
+                      Text(widget.title, style: Theme.of(context).textTheme.displayMedium),
                       SizedBox(height: 32.h),
-                      const AppTextField(
-                        hintText: "Numéro de téléphone",
-                        prefixIcon: Icons.phone_outlined,
+                      AppTextField(
+                        controller: widget.emailController,
+                        hintText: "Email ou Téléphone",
+                        prefixIcon: Icons.email_outlined,
                       ),
                       SizedBox(height: 16.h),
-                      const AppTextField(
+                      AppTextField(
+                        controller: widget.passwordController,
                         hintText: "Mot de passe",
                         prefixIcon: Icons.lock_outline,
                         isPassword: true,
@@ -64,7 +81,6 @@ class LoginScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // "Se rappeler" would need a stateful widget to manage state
                           Text("Se rappeler", style: Theme.of(context).textTheme.bodyMedium),
                           TextButton(
                             onPressed: () {},
@@ -76,14 +92,18 @@ class LoginScreen extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: 24.h),
-                      AppButton(
-                        text: "Se connecter",
-                        onPressed: () {
-                          if (formKey.currentState?.validate() ?? false) {
-                            // TODO: Implement login logic
-                          }
-                        },
-                      ),
+                      widget.isLoading 
+                        ? const Center(child: CircularProgressIndicator())
+                        : AppButton(
+                            text: "Se connecter",
+                            onPressed: () {
+                              if (_formKey.currentState?.validate() ?? false) {
+                                if (widget.onLogin != null) {
+                                  widget.onLogin!();
+                                }
+                              }
+                            },
+                          ),
                       SizedBox(height: 24.h),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

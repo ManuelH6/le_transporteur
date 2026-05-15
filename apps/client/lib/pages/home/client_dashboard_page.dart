@@ -209,10 +209,6 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: AppColors.text, size: 24.sp),
-            onPressed: () {},
-          ),
           const NotificationBell(),
           SizedBox(width: 8.w),
         ],
@@ -263,26 +259,6 @@ class _ClientDashboardPageState extends State<ClientDashboardPage> {
                           ),
                         );
                       },
-                    ),
-                    Positioned(
-                      bottom: 12.h,
-                      left: 0,
-                      right: 0,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          _ads.length,
-                          (index) => Container(
-                            margin: EdgeInsets.symmetric(horizontal: 4.w),
-                            width: _currentPage == index ? 20.w : 6.w,
-                            height: 6.h,
-                            decoration: BoxDecoration(
-                              color: _currentPage == index ? AppColors.primary : Colors.white.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(3.r),
-                            ),
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),

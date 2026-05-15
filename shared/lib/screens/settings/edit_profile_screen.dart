@@ -79,13 +79,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
-        title: Text("Modifier le profil", style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 18.sp)),
+        title: Text(
+          "Modifier le profil", 
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold, 
+            fontSize: 18.sp,
+            color: isDark ? AppColors.darkText : AppColors.text,
+          )
+        ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? Colors.white : AppColors.text, size: 20.sp),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(24.w),
@@ -114,14 +127,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(height: 32.h),
               AppTextField(
                 controller: _nameController,
-                hintText: "Nom complet",
+                labelText: "Nom complet",
+                hintText: "Entrez votre nom",
                 prefixIcon: Icons.person_outline,
                 validator: (val) => val == null || val.isEmpty ? "Nom requis" : null,
               ),
               SizedBox(height: 16.h),
               AppTextField(
                 controller: _emailController,
-                hintText: "Email",
+                labelText: "Email",
+                hintText: "exemple@mail.com",
                 prefixIcon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
                 validator: (val) => val == null || !val.contains('@') ? "Email invalide" : null,
@@ -129,7 +144,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(height: 16.h),
               AppTextField(
                 controller: _phoneController,
-                hintText: "Téléphone",
+                labelText: "Téléphone",
+                hintText: "Numéro de téléphone",
                 prefixIcon: Icons.phone_android_outlined,
                 keyboardType: TextInputType.phone,
               ),

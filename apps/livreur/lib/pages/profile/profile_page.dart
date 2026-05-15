@@ -65,15 +65,15 @@ class _ProfilePageState extends State<ProfilePage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final isApproved = _livreurProfile?.verificationStatus?.toLowerCase() == 'approved';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF0EB),
+      backgroundColor: isDark ? AppColors.darkBackground : const Color(0xFFFFF0EB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.text, size: 20.sp),
+          icon: Icon(Icons.arrow_back_ios, color: isDark ? AppColors.darkText : AppColors.text, size: 20.sp),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -81,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
           style: GoogleFonts.poppins(
             fontSize: 18.sp,
             fontWeight: FontWeight.w600,
-            color: AppColors.text,
+            color: isDark ? AppColors.darkText : AppColors.text,
           ),
         ),
         centerTitle: true,
@@ -124,6 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader(String? status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.help_outline;
     String statusText = "Statut inconnu";
@@ -145,11 +146,11 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(24.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -167,7 +168,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   gradient: const LinearGradient(
                     colors: [Color(0xFFFF6B35), Color(0xFFFF8C42)],
                   ),
-                  border: Border.all(color: Colors.white, width: 4),
+                  border: Border.all(color: isDark ? AppColors.darkSurface : Colors.white, width: 4),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withValues(alpha: 0.3),
@@ -211,7 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
             style: GoogleFonts.poppins(
               fontSize: 22.sp,
               fontWeight: FontWeight.bold,
-              color: AppColors.text,
+              color: isDark ? AppColors.darkText : AppColors.text,
             ),
           ),
           SizedBox(height: 12.h),
@@ -243,14 +244,15 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildPersonalInfoSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -268,7 +270,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+                  color: isDark ? AppColors.darkText : AppColors.text,
                 ),
               ),
             ],
@@ -287,14 +289,15 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildVehicleInfoSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -312,7 +315,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+                  color: isDark ? AppColors.darkText : AppColors.text,
                 ),
               ),
             ],
@@ -335,14 +338,15 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildIdentitySection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20.r),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -360,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+                  color: isDark ? AppColors.darkText : AppColors.text,
                 ),
               ),
             ],
@@ -380,15 +384,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
 
   Widget _buildStatisticsSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2D2D2D), Color(0xFF424242)],
+        gradient: LinearGradient(
+          colors: isDark ? [AppColors.darkSurface, const Color(0xFF2D2D2D)] : [const Color(0xFF2D2D2D), const Color(0xFF424242)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20.r),
+        border: isDark ? Border.all(color: Colors.white10) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,18 +465,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 8.h),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[600], size: 20.sp),
+          Icon(icon, color: isDark ? Colors.grey[500] : Colors.grey[600], size: 20.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Text(
               label,
               style: GoogleFonts.poppins(
                 fontSize: 14.sp,
-                color: Colors.grey[600],
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
               ),
             ),
           ),
@@ -481,7 +488,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: GoogleFonts.poppins(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
-                color: AppColors.text,
+                color: isDark ? AppColors.darkText : AppColors.text,
               ),
             ),
           ),
@@ -512,8 +519,9 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildDivider() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Divider(
-      color: Colors.grey[200],
+      color: isDark ? Colors.grey[800] : Colors.grey[200],
       height: 1,
       thickness: 1,
     );

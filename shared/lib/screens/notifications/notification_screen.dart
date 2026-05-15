@@ -16,7 +16,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   final NotificationApi _api = NotificationApi();
   List<UserNotification> _notifications = [];
   bool _isLoading = true;
-  String _selectedFilter = 'Toutes';
+  String _selectedFilter = 'Non lues';
 
   @override
   void initState() {
@@ -52,7 +52,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return _notifications;
   }
 
-  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+  int get _unreadCount {
+    return _notifications.where((n) => !n.isRead).length;
+  }
 
   Future<void> _markAsRead(UserNotification item) async {
     if (item.isRead) return;
@@ -65,7 +67,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _markAllAsRead() async {
+    final unreadNotifications = _notifications.where((n) => !n.isRead).toList();
+    if (unreadNotifications.isEmpty) return;
+
     // Optimistic update
+    final originalNotifications = List<UserNotification>.from(_notifications);
     setState(() {
       _notifications = _notifications.map((n) => UserNotification(
         id: n.id,
@@ -78,13 +84,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
     });
 
     try {
-      await _api.markAllAsRead();
-      // Wait a bit for backend to process before refreshing
-      await Future.delayed(const Duration(milliseconds: 800));
+      // Alternative approach: Mark each notification individually
+      await Future.wait(unreadNotifications.map((n) => _api.markAsRead(n.id)));
+      
+      // Small delay to let backend settle
+      await Future.delayed(const Duration(milliseconds: 500));
       _fetchNotifications();
     } catch (e) {
-      debugPrint("Error markAllAsRead: $e");
-      _fetchNotifications(); 
+      debugPrint("Error markAllAsRead (loop): $e");
+      // Rollback on error
+      if (mounted) {
+        setState(() {
+          _notifications = originalNotifications;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Échec du marquage comme lu. Réessayez.")),
+        );
+      }
     }
   }
 
@@ -331,7 +347,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   IconData _getNotificationIcon(String type) {
     final t = type.toLowerCase();
-    if (t.contains('delivery') || t.contains('livraison') || t.contains('order')) return Icons.local_shipping;
+    if (t.contains('delivery') || t.contains('livraison') || t.contains('order')) return Icons.motorcycle;
     if (t.contains('payment') || t.contains('paiement')) return Icons.account_balance_wallet;
     if (t.contains('info')) return Icons.info;
     return Icons.notifications;

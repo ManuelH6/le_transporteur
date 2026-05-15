@@ -14,6 +14,7 @@ import 'package:livreur_le_transporteur/models/registration_data.dart';
 import 'package:shared_le_transporteur/api/v1/api_client.dart'; 
 import 'package:shared_le_transporteur/screens/notifications/notification_screen.dart';
 import 'package:livreur_le_transporteur/pages/settings/settings_page.dart';
+import 'package:shared_le_transporteur/core/widgets/notification_bell.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -83,15 +84,18 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     if (_isCheckingProfile) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       drawer: CourierDrawer(
         user: _user,
         currentIndex: _currentIndex,
@@ -104,9 +108,10 @@ class _HomePageState extends State<HomePage> {
       body: _tabs[_currentIndex],
       bottomNavigationBar: _currentIndex == 3 ? null : Container(
         decoration: BoxDecoration(
+          color: isDark ? AppColors.darkSurface : Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -117,9 +122,9 @@ class _HomePageState extends State<HomePage> {
           child: BottomNavigationBar(
             currentIndex: _currentIndex < 3 ? _currentIndex : 0,
             onTap: (index) => setState(() => _currentIndex = index),
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
             selectedItemColor: AppColors.primary,
-            unselectedItemColor: Colors.grey[400],
+            unselectedItemColor: isDark ? Colors.grey[600] : Colors.grey[400],
             selectedLabelStyle: GoogleFonts.poppins(
               fontWeight: FontWeight.w700, 
               fontSize: 11.sp,
@@ -173,17 +178,17 @@ class _HomePageState extends State<HomePage> {
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String title = "Tableau de bord";
     if (_currentIndex == 1) title = "Courses disponibles";
     if (_currentIndex == 2) title = "Mes Courses";
-
     if (_currentIndex == 3) title = "Paramètres";
 
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
       elevation: 0,
       leading: IconButton(
-        icon: Icon(Icons.menu, color: AppColors.text, size: 28.sp),
+        icon: Icon(Icons.menu, color: isDark ? AppColors.darkText : AppColors.text, size: 28.sp),
         onPressed: () => _scaffoldKey.currentState?.openDrawer(),
       ),
       title: Text(
@@ -191,21 +196,13 @@ class _HomePageState extends State<HomePage> {
         style: GoogleFonts.poppins(
           fontSize: 18.sp,
           fontWeight: FontWeight.bold,
-          color: AppColors.text,
+          color: isDark ? AppColors.darkText : AppColors.text,
         ),
       ),
-      actions: _currentIndex == 0 ? [
-        IconButton(
-          icon: Icon(Icons.notifications_outlined, color: AppColors.text, size: 26.sp),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const NotificationScreen()),
-            );
-          },
-        ),
+      actions: [
+        const NotificationBell(),
         SizedBox(width: 8.w),
-      ] : null,
+      ],
     );
   }
 }

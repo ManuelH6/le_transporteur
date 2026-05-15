@@ -39,6 +39,7 @@ class ReportService {
       // Load Font for UTF-8 support
       final font = await PdfGoogleFonts.poppinsRegular();
       final fontBold = await PdfGoogleFonts.poppinsBold();
+      final fontFallback = await PdfGoogleFonts.notoSansRegular();
       
       // Load Logo
       final logoData = await rootBundle.load('packages/shared_le_transporteur/assets/images/logo_le_transporteur_orange.png');
@@ -74,6 +75,7 @@ class ReportService {
           theme: pw.ThemeData.withFont(
             base: font,
             bold: fontBold,
+            fontFallback: [fontFallback],
           ),
           header: (context) => pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -109,7 +111,7 @@ class ReportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text('Utilisateur : ${user.name}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      pw.Text('Utilisateur : ${_cleanText(user.name)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
                       pw.Text('Email : ${user.email}', style: const pw.TextStyle(fontSize: 12)),
                       pw.Text('Rôle : ${isCourier ? 'Livreur' : 'Client'}', style: const pw.TextStyle(fontSize: 12)),
                     ],
@@ -242,18 +244,42 @@ class ReportService {
           children: [
             pw.Text(title, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey)),
             pw.SizedBox(height: 4),
-            pw.Text(value, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: color)),
+            pw.Text(_cleanText(value), style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: color)),
           ],
         ),
       ),
     );
   }
 
+  String _cleanText(String text) {
+    // Replace common superscript ordinal indicators with normal letters for maximum compatibility
+    return text
+        .replaceAll('\u1D49', 'e') // ᵉ
+        .replaceAll('\u1D43', 'a') // ᵃ
+        .replaceAll('\u02B3', 'r') // ʳ
+        .replaceAll('\u207F', 'n') // ⁿ
+        .replaceAll('\u00B2', '2') // ²
+        .replaceAll('\u00B3', '3') // ³
+        .replaceAll('\u1D48', 'd') // ᵈ
+        .replaceAll('\u1D50', 'm') // ᵐ
+        .replaceAll('\u1D52', 'o') // ᵒ
+        .replaceAll('\u1D56', 'p') // ᵖ
+        .replaceAll('\u1D57', 't') // ᵗ
+        .replaceAll('\u1D58', 'u') // ᵘ
+        .replaceAll('\u1D5B', 'v') // ᵛ
+        .replaceAll('ᵉ', 'e')
+        .replaceAll('ʳ', 'r')
+        .replaceAll('ˢ', 's')
+        .replaceAll('ⁿ', 'n')
+        .replaceAll('ᵈ', 'd')
+        .replaceAll('ᵐ', 'm');
+  }
+
   pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(6),
       child: pw.Text(
-        text,
+        _cleanText(text),
         style: pw.TextStyle(
           fontSize: 8,
           color: isHeader ? PdfColors.white : PdfColors.black,
