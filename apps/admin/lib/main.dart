@@ -9,9 +9,14 @@ import 'package:shared_le_transporteur/screens/splash_screen.dart';
 import 'package:shared_le_transporteur/screens/login_screen.dart';
 import 'package:admin_le_transporteur/pages/dashboard/dashboard_page.dart';
 import 'package:admin_le_transporteur/pages/auth/admin_login_page.dart';
+import 'package:admin_le_transporteur/pages/auth/admin_register_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Désactiver le téléchargement dynamique des polices en cas de problème réseau
+  GoogleFonts.config.allowRuntimeFetching = false;
+  
   await Hive.initFlutter();
   await Hive.openBox('auth');
   
@@ -44,6 +49,7 @@ class AdminApp extends StatelessWidget {
           routes: {
             '/': (context) => const SplashScreen(nextRoute: '/login'),
             '/login': (context) => const AdminLoginPage(),
+            '/register': (context) => const AdminRegisterPage(),
             '/dashboard': (context) => const DashboardPage(),
           },
         );

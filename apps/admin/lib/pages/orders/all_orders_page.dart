@@ -96,7 +96,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  order.pickupAddress.address,
+                  order.getDisplayLocation(true),
                   style: TextStyle(fontSize: 12.sp, color: Colors.grey),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -110,7 +110,7 @@ class _AllOrdersPageState extends State<AllOrdersPage> {
               SizedBox(width: 4.w),
               Expanded(
                 child: Text(
-                  order.deliveryAddress.address,
+                  order.getDisplayLocation(false),
                   style: TextStyle(fontSize: 12.sp, color: Colors.grey),
                   overflow: TextOverflow.ellipsis,
                 ),

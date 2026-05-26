@@ -12,7 +12,12 @@ import 'welcome_screen.dart'; // Navigate to welcome screen after splash
 
 class SplashScreen extends StatefulWidget {
   final bool useOrangeSplash;
-  const SplashScreen({super.key, this.useOrangeSplash = false});
+  final String nextRoute;
+  const SplashScreen({
+    super.key,
+    this.useOrangeSplash = false,
+    this.nextRoute = '/welcome',
+  });
 
   @override
   SplashScreenState createState() => SplashScreenState();
@@ -37,9 +42,13 @@ class SplashScreenState extends State<SplashScreen> with SingleTickerProviderSta
     _controller.forward();
 
     Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      );
+      if (widget.nextRoute == '/welcome') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        );
+      } else {
+        Navigator.of(context).pushReplacementNamed(widget.nextRoute);
+      }
     });
   }
 

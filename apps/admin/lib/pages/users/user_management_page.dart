@@ -88,7 +88,7 @@ class _UserManagementPageState extends State<UserManagementPage> with SingleTick
     }
 
     return RefreshIndicator(
-      onPressed: _loadUsers,
+      onRefresh: _loadUsers,
       child: ListView.separated(
         itemCount: filtered.length,
         padding: EdgeInsets.all(16.w),

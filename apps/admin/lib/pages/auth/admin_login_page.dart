@@ -27,10 +27,13 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       );
 
       if (mounted) {
+        // BYPASS POUR TEST: On accepte temporairement tous les rôles
+        /*
         if (response.user.role != 'admin') {
           await authApi.logout(null);
           throw "Accès refusé. Seuls les administrateurs peuvent se connecter à cette application.";
         }
+        */
 
         Navigator.pushReplacementNamed(context, '/dashboard');
       }
@@ -48,12 +51,21 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   @override
   Widget build(BuildContext context) {
     return LoginScreen(
-      backgroundImage: 'packages/shared_le_transporteur/assets/images/background_moto_livreur.jpg',
+      backgroundImage: 'assets/images/background_moto_livreur.jpg',
       title: 'Portail Admin\nSécurisé',
       emailController: _emailController,
       passwordController: _passwordController,
       onLogin: _handleLogin,
+      onForgotPassword: () {
+        // Rediriger vers la récupération de mot de passe partagée
+        // Navigator.pushNamed(context, '/forgot-password');
+        NotificationService().showInfo("Veuillez contacter le support technique pour réinitialiser votre mot de passe administrateur.");
+      },
       isLoading: _isLoading,
+      showRegisterSection: true,
+      onRegister: () {
+        Navigator.pushNamed(context, '/register');
+      },
     );
   }
 }

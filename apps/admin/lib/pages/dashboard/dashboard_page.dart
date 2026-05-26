@@ -64,7 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onPressed: _loadStats,
+              onRefresh: _loadStats,
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20.w),
                 child: Column(
@@ -203,7 +203,11 @@ class _DashboardPageState extends State<DashboardPage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const UserDrawerHeader(),
+          UserDrawerHeader(
+            user: null, // TODO: Pass actual logged in user
+            onTapProfile: () {},
+            onTapEdit: () {},
+          ),
           _buildDrawerItem(Icons.dashboard, 'Dashboard', isActive: true, onTap: () => Navigator.pop(context)),
           _buildDrawerItem(Icons.people, 'Utilisateurs', onTap: () {
             Navigator.pop(context);

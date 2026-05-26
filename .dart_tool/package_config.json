@@ -260,6 +260,12 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "fl_chart",
+      "rootUri": "file:///C:/Users/assog/AppData/Local/Pub/Cache/hosted/pub.dev/fl_chart-0.70.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.2"
+    },
+    {
       "name": "flutter",
       "rootUri": "file:///C:/Users/assog/flutter/packages/flutter",
       "packageUri": "lib/",
@@ -1120,6 +1126,12 @@
     {
       "name": "livreur_le_transporteur",
       "rootUri": "../apps/livreur",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "admin_le_transporteur",
+      "rootUri": "../apps/admin",
       "packageUri": "lib/",
       "languageVersion": "3.10"
     },

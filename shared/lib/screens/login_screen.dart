@@ -14,7 +14,10 @@ class LoginScreen extends StatefulWidget {
   final TextEditingController? emailController;
   final TextEditingController? passwordController;
   final VoidCallback? onLogin;
+  final VoidCallback? onForgotPassword;
+  final VoidCallback? onRegister;
   final bool isLoading;
+  final bool showRegisterSection;
 
   const LoginScreen({
     super.key,
@@ -24,7 +27,10 @@ class LoginScreen extends StatefulWidget {
     this.emailController,
     this.passwordController,
     this.onLogin,
+    this.onForgotPassword,
+    this.onRegister,
     this.isLoading = false,
+    this.showRegisterSection = true,
   });
 
   @override
@@ -83,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text("Se rappeler", style: Theme.of(context).textTheme.bodyMedium),
                           TextButton(
-                            onPressed: () {},
+                            onPressed: widget.onForgotPassword,
                             child: Text(
                               "Mot de passe oublié ?",
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.primary),
@@ -104,23 +110,25 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             },
                           ),
-                      SizedBox(height: 24.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("Pas de compte ? ", style: Theme.of(context).textTheme.bodyMedium),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              "S'inscrire",
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                      if (widget.showRegisterSection) ...[
+                        SizedBox(height: 24.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text("Pas de compte ? ", style: Theme.of(context).textTheme.bodyMedium),
+                            TextButton(
+                              onPressed: widget.onRegister,
+                              child: Text(
+                                "S'inscrire",
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                       const LegalNoticeWidget(),
                     ],
                   ),
